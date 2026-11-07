@@ -1,0 +1,2 @@
+Harp samples: FluidR3 General MIDI soundfont (FluidR3_GM.sf2) by Frank Wen,
+MP3 note samples from the npm package soundfont-for-samplers (MIT License).

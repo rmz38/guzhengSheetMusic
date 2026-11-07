@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>筝谱 · Guzheng Jianpu Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ece5d8; --paper:#fbf8f1; --panel:#fffdf8; --ink:#1f1a17; --muted:#7c7166;
+  --line:#ddd3c2; --seal:#b23a2a; --seal-soft:rgba(178,58,42,.12); --amber:#a8661a;
+  --ui:"Inter",system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --serif:"Noto Serif SC","Songti SC",serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+
+/* ---------- top bar ---------- */
+.top{position:sticky;top:0;z-index:20;background:var(--panel);border-bottom:1px solid var(--line)}
+.bar1{display:flex;align-items:center;gap:12px;padding:10px 18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.seal{width:34px;height:34px;border-radius:6px;background:var(--seal);color:#fff;display:grid;place-items:center;font-family:var(--serif);font-size:20px;font-weight:700}
+.brand b{font-family:var(--serif);font-size:17px;letter-spacing:.04em}
+.brand small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+.status{font-size:12px;color:var(--muted);white-space:nowrap}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;display:inline-flex;align-items:center;gap:6px;line-height:1.1}
+.btn:hover{border-color:#c8bba6;background:#fffaf0}
+.btn.primary{background:var(--seal);border-color:var(--seal);color:#fff}
+.btn.primary:hover{background:#9c3022}
+.menuwrap{position:relative}
+.menu{position:absolute;right:0;top:calc(100% + 6px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 30px rgba(60,40,20,.15);padding:6px;min-width:230px;display:none;z-index:30}
+.menu.open{display:block}
+.menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:6px}
+.menu button:hover{background:#f6efe3}
+.menu small{display:block;color:var(--muted);font-size:11.5px}
+
+.tools{display:flex;gap:6px 14px;flex-wrap:wrap;padding:8px 18px 10px;border-top:1px solid #efe8db;align-items:flex-end}
+.tg{display:flex;flex-direction:column;gap:4px}
+.tg>label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.tg .row{display:flex;gap:3px;flex-wrap:wrap}
+.tb{min-width:32px;height:32px;padding:0 8px;border:1px solid var(--line);background:#fff;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:13px;white-space:nowrap}
+.tb:hover{border-color:#c8bba6;background:#fffaf0}
+.tb.on{background:var(--seal);border-color:var(--seal);color:#fff}
+.tb.num{font-size:16px;font-weight:600;min-width:30px}
+.tb.dur{gap:5px;padding:0 8px 0 6px}
+.frac{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1;min-width:14px}
+.frac i{font-style:normal;padding:0 1px}
+.frac i:first-child{border-bottom:1.3px solid currentColor;padding-bottom:1px;margin-bottom:1px}
+.frac.whole{font-size:13px;min-width:auto}
+.doticon{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin:0 3px}
+.tb .zh{font-size:12px;opacity:.75}
+.tb.on .zh{opacity:.9}
+.tb .k{font-size:10px;opacity:.55}
+.tb.tech{font-family:var(--serif);font-size:14px}
+.tip{position:fixed;z-index:60;max-width:280px;background:#2a211b;color:#fff;font-size:12.5px;line-height:1.45;padding:8px 11px;border-radius:8px;box-shadow:0 8px 24px rgba(30,20,10,.25);pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s}
+.tip.show{opacity:1;transform:none}
+.tip b{font-family:var(--serif);font-size:14px;margin-right:6px}
+.tip .s{display:inline-block;min-width:18px;text-align:center;background:rgba(255,255,255,.12);border-radius:4px;padding:0 4px;margin-right:6px;font-weight:600}
+.tip .kb{float:right;margin-left:10px;font-size:11px;border:1px solid rgba(255,255,255,.3);border-bottom-width:2px;border-radius:4px;padding:0 5px;opacity:.85}
+.py{font-family:var(--ui);font-weight:400;font-style:normal;letter-spacing:0;text-transform:none;font-size:.82em;opacity:.7}
+.tip .py{opacity:.75}
+.tip small{display:block;opacity:.6;font-size:11px;margin-top:3px}
+.tm{cursor:help;padding:0 1px;border-radius:3px}
+.tm:hover{background:rgba(178,58,42,.12)}
+.measure{position:relative}
+#staff .measure.cur{background:rgba(178,58,42,.03);border-radius:6px}
+.measure.msel{background:rgba(178,58,42,.07);border-radius:6px}
+.mbtn{opacity:0;pointer-events:none;transition:opacity .12s;position:absolute;top:-6px;right:-2px;width:26px;height:20px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:14px;line-height:1;padding:0 0 4px;cursor:pointer;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.lbtn{position:absolute;top:-8px;right:-36px;width:26px;height:20px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:14px;line-height:1;padding:0 0 4px;cursor:pointer;z-index:2;opacity:0;pointer-events:none;transition:opacity .12s;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+/* invisible hover zone: widens each line into the page margins so the line ⋯ is easy to reach */
+#staff .line{isolation:isolate}
+#staff .line::after{content:"";position:absolute;top:-4px;bottom:-10px;left:-34px;right:-56px;z-index:-1}
+#staff .line::before{content:"";position:absolute;top:-9px;bottom:-4px;left:-12px;right:-46px;border:1.5px dashed rgba(178,58,42,.45);border-radius:10px;opacity:0;transition:opacity .12s;pointer-events:none}
+#staff .line.two::before{left:-5px}
+#staff .line:hover::before,#staff .line.lopen::before{opacity:1}
+.line:hover>.lbtn,.line.lopen>.lbtn,.lbtn.ov,.lbtn:focus-visible{opacity:1;pointer-events:auto}
+.lbtn.ov{color:var(--seal);border-color:rgba(178,58,42,.4)}
+.lbtn:hover{border-color:var(--seal);color:var(--seal)}
+.measure:hover>.mbtn,.measure.msel>.mbtn,.mbtn:focus-visible{opacity:1;pointer-events:auto}
+.measure:hover{background:rgba(0,0,0,.045);border-radius:6px}
+.mbtn:hover{border-color:var(--seal);color:var(--seal)}
+.mpop{position:fixed;z-index:55;width:300px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px rgba(60,40,20,.2);padding:14px 16px;display:none}
+.mpop.open{display:block}
+.mp-h{font-family:var(--serif);font-weight:700;font-size:15px;margin-bottom:8px}
+.mp-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #efe8db}
+.mp-row b{display:block;font-size:13px}
+.mp-row small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.stepper{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;flex:none}
+.stepper button{border:0;background:#f6efe3;width:26px;font-size:15px}
+.stepper button:hover{background:#efe3cf}
+.stepper input{width:38px;border:0;text-align:center;font-weight:600;-moz-appearance:textfield}
+.stepper input::-webkit-inner-spin-button{display:none}
+.mp-act{display:flex;justify-content:space-between;gap:8px;margin-top:10px}
+.tb.tq .sy{font-family:var(--ui);font-weight:600;min-width:12px;display:inline-block;text-align:center}
+.tb.on .sy,.tb.on .en{color:#fff}
+.tb.tq .en{font-family:var(--ui);font-size:10.5px;opacity:.65}
+.tools select{height:32px;border:1px solid var(--line);border-radius:6px;background:#fff;padding:0 6px}
+.chk{display:flex;align-items:center;gap:5px;font-size:12.5px;height:32px;color:var(--muted)}
+
+/* ---------- sheet ---------- */
+main{padding:26px 16px 80px}
+.sheet.multi{padding-left:84px}
+.sheet{background:var(--paper);max-width:1000px;margin:0 auto;padding:44px 56px 56px;border-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,.04),0 12px 40px rgba(80,55,25,.12);position:relative;min-height:60vh}
+.meta-in{border:1px dashed transparent;background:transparent;border-radius:4px;outline:none}
+.meta-in:hover{border-color:var(--line)}
+.meta-in:focus{border-color:var(--seal);background:#fff}
+#tTitle{display:block;width:100%;text-align:center;font-family:var(--serif);font-size:30px;font-weight:700;letter-spacing:.06em;padding:2px 6px}
+#tSub{display:block;width:100%;text-align:center;font-family:var(--serif);font-size:15px;color:var(--muted);padding:2px 6px;margin-top:2px}
+.metarow{display:flex;justify-content:space-between;align-items:flex-end;margin:18px 0 8px;gap:12px;flex-wrap:wrap}
+.keysig{display:flex;align-items:center;gap:6px;font-family:var(--serif);font-size:16px;font-weight:600}
+.keysig select,.keysig input{border:1px dashed transparent;background:transparent;font-family:var(--serif);font-weight:600;font-size:16px;padding:1px 2px;border-radius:4px}
+.keysig select:hover,.keysig input:hover{border-color:var(--line)}
+.keysig input{width:52px}
+#tComp{text-align:right;font-family:var(--serif);font-size:14px;min-width:200px;padding:2px 6px}
+#staff{outline:none;padding-top:6px;min-height:200px}
+#staff:focus-visible{box-shadow:none}
+.info{max-width:1000px;margin:12px auto 0;display:flex;justify-content:space-between;color:var(--muted);font-size:12px;gap:12px;flex-wrap:wrap;padding:0 4px}
+.legend span{margin-right:12px}
+.legend i{font-style:normal;color:var(--amber);font-weight:600}
+.empty{color:var(--muted);text-align:center;padding:70px 0;font-size:15px;border:1.5px dashed var(--line);border-radius:10px}
+.empty b{color:var(--seal)}
+.cell.play .dig,.cell.play .dsh{color:var(--seal)}
+.cell.play .dsh{background:var(--seal)}
+.cell.sel{background:var(--seal-soft)}
+.cell.g.sel,.cell.g:hover{background:none}
+.cell.g.sel>.cin{background:var(--seal-soft)}
+.cell.g:hover>.cin{background:rgba(0,0,0,.035)}
+.cell.sel .dig{color:var(--seal)}
+.cell.sel .act{box-shadow:inset 0 0 0 1.5px rgba(178,58,42,.55);border-radius:4px}
+.ctone,.cell.chord .main{cursor:pointer}
+.press .dig,.press.dig{color:var(--amber)}
+.stk{display:inline-flex;flex-direction:column;gap:1.5px;margin-right:2px}
+.stk i{display:block;width:9px;height:2px;background:currentColor;border-radius:1px}
+.arpi{display:inline-block;width:7px;height:14px;margin-right:3px;position:relative;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='6'%3E%3Cpath d='M3.5 0 Q7 1.5 3.5 3 Q0 4.5 3.5 6' fill='none' stroke='%23555' stroke-width='1.2'/%3E%3C/svg%3E") repeat-y center/7px 6px}
+.arpi::after{content:"";position:absolute;left:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
+.arpi.a-up::after{top:-4px;border-bottom:4px solid currentColor}
+.arpi.a-down::after{bottom:-4px;border-top:4px solid currentColor}
+.bl.tok,.bl[data-after]{cursor:pointer}
+#staff .bl[data-after],#staff .bl.tok{padding:0 4px;margin-left:-3px;margin-right:-3px;border-radius:4px}
+#staff .bl[data-after]:hover,#staff .bl.tok:hover,#staff .bl.picked{background:rgba(178,58,42,.14)}
+.grip{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);font-size:11px;line-height:1;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 3px;cursor:grab;opacity:0;transition:opacity .1s;z-index:3;user-select:none}
+.cell:hover>.grip,.cell.sel>.grip{opacity:1}
+.grip:hover{color:var(--seal);border-color:var(--seal)}
+body.dragging,body.dragging *{cursor:grabbing!important;user-select:none}
+body.dragging .grip{opacity:0!important}
+.dragghost{position:fixed;z-index:70;display:none;pointer-events:none;background:var(--seal);color:#fff;font-weight:600;font-size:14px;padding:3px 8px;border-radius:6px;box-shadow:0 6px 18px rgba(60,30,10,.25)}
+.dropmark{position:fixed;z-index:69;display:none;pointer-events:none;width:3px;border-radius:2px;background:var(--seal)}
+.editgrp{display:inline-flex;gap:3px}
+.rz{position:absolute;z-index:4;display:block}
+.rz-w{top:0;bottom:0;right:-7px;width:12px;cursor:ew-resize}
+.rz-h{left:0;right:0;bottom:-11px;height:12px;cursor:ns-resize}
+.rz::after{content:"";position:absolute;background:var(--seal);border-radius:3px;opacity:.55}
+.rz-w::after{left:4px;top:calc(50% - 16px);width:4px;height:32px}
+.rz-h::after{top:4px;left:calc(50% - 16px);height:4px;width:32px}
+.rz:hover::after{opacity:1}
+#staff.layout-mode .line::before{opacity:.7}
+body.rzx,body.rzx *{cursor:ew-resize!important;user-select:none}
+body.rzy,body.rzy *{cursor:ns-resize!important;user-select:none}
+.rzi{display:inline-block;width:10px;height:10px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;margin-right:2px}
+.mp-note{font-size:12px;color:var(--muted);margin:0 0 8px;line-height:1.45}
+.prow{display:flex;align-items:center;gap:4px;padding:4px 0;border-top:1px solid #efe8db}
+.pname{flex:1;min-width:0;border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:#fff}
+.prow .x{border:0;background:none;color:var(--muted);padding:4px 6px;border-radius:5px;cursor:pointer}
+.prow .x:hover:not(:disabled){background:#efe5d4;color:var(--ink)}
+.prow .x:disabled{opacity:.3;cursor:default}
+.prow .x.danger{color:var(--seal)}
+#partsN:empty{display:none}
+#partsN{background:var(--seal);color:#fff;border-radius:8px;padding:0 5px;font-size:11px}
+.tb.on #partsN{background:#fff;color:var(--seal)}
+.blpick{display:flex;gap:4px;margin:4px 0 2px}
+.blpick .tb{min-width:40px;font-weight:600}
+.bl.sel{background:var(--seal-soft);border-radius:3px}
+.cell{cursor:pointer}
+.cell:hover{background:rgba(0,0,0,.035)}
+.press .dig{color:var(--amber)}
+.caret{width:2px;height:34px;background:var(--seal);align-self:flex-end;margin-bottom:18px;animation:blink 1s steps(2) infinite;flex:none}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- drawer & modal ---------- */
+.drawer{position:fixed;top:0;right:0;height:100%;width:min(380px,92vw);background:var(--panel);border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(60,40,20,.15);transform:translateX(105%);transition:transform .22s ease;z-index:40;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.drawer header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.drawer header h2{margin:0 auto 0 0;font-family:var(--serif);font-size:18px}
+.drawer .note{padding:10px 18px;font-size:12px;color:var(--muted);border-bottom:1px solid #efe8db}
+.lib{overflow:auto;flex:1;padding:8px}
+.li{padding:10px 12px;border-radius:8px;display:flex;align-items:center;gap:8px;border:1px solid transparent}
+.li:hover{background:#f7f0e4}
+.li.cur{border-color:var(--seal);background:#fff}
+.li .t{flex:1;min-width:0;cursor:pointer}
+.li .t b{display:block;font-family:var(--serif);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li .t small{color:var(--muted);font-size:11.5px}
+.li .x{border:0;background:none;color:var(--muted);padding:4px 6px;border-radius:5px;font-size:12px}
+.li .x:hover{background:#efe5d4;color:var(--ink)}
+.li .x.danger{color:var(--seal)}
+.scrim{position:fixed;inset:0;background:rgba(40,25,10,.25);z-index:35;display:none}
+.scrim.open{display:block}
+.modal{position:fixed;inset:0;display:none;place-items:center;z-index:50;background:rgba(40,25,10,.3);padding:16px}
+.modal.open{display:grid}
+.mbox{background:var(--panel);border-radius:12px;max-width:640px;width:100%;max-height:88vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 60px rgba(40,25,10,.3)}
+.mbox h3{margin:0 0 12px;font-family:var(--serif);font-size:19px}
+.mbox p,.mbox li{line-height:1.55}
+.mbox table{border-collapse:collapse;width:100%;font-size:13px;margin:6px 0 14px}
+.mbox td{border-bottom:1px solid #eee4d3;padding:5px 6px;vertical-align:top}
+.mbox td:first-child{white-space:nowrap;font-weight:600;width:1%}
+kbd{display:inline-block;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-family:var(--ui);font-size:12px;background:#fff;margin:1px}
+.mbox textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:8px;padding:10px;font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#fff}
+.mact{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+code{background:#f3ecdf;padding:1px 5px;border-radius:4px;font-size:12.5px}
+@media (max-height:900px){.top{position:static}}
+@media (max-width:640px){
+  .sheet{padding:28px 18px 40px}
+  #tTitle{font-size:24px}
+  .tools{padding:8px 10px}
+  .bar1{padding:8px 10px}
+}
+</style>
+<style id="scoreCss">
+.staff-lines{font-family:"Inter",system-ui,sans-serif;color:#1f1a17}
+.line{display:flex;align-items:flex-end;margin:6px 0 16px;position:relative}
+.mnum{position:absolute;left:-22px;bottom:30px;font-size:10px;color:#9a8f84;width:18px;text-align:right}
+.measure{position:relative;flex:4 1 0;min-width:max-content;display:flex;justify-content:space-around;align-items:flex-end;padding:0 4px}
+.grp{display:inline-flex;align-items:flex-end}
+.cell{display:inline-flex;flex-direction:column;align-items:center;padding:0 5px;border-radius:4px;min-width:20px;position:relative}
+.ctone{display:flex;flex-direction:column;align-items:center}
+.cup,.cdn{display:flex;flex-direction:column;align-items:center;gap:1.5px;min-height:3px}
+.cup:not(:empty){padding-bottom:1px}
+.cdn:not(:empty){padding-top:1px}
+.cup{justify-content:flex-end}
+.cdn{justify-content:flex-start}
+.cell.chord .up{height:auto;min-height:2px;margin-bottom:-2px;position:relative;z-index:1}
+.cell.chord .main{font-size:19px}
+.cell.chord .dt{width:3.5px;height:3.5px}
+.crow{height:24px;display:flex;align-items:center;font-size:19px;font-weight:500;line-height:1}
+.cell.has-arp{padding-left:12px}
+.arp{position:absolute;left:1px;top:16px;bottom:20px;width:8px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M4 0 Q8 2 4 4 Q0 6 4 8' fill='none' stroke='%231f1a17' stroke-width='1.3'/%3E%3C/svg%3E") repeat-y center top/8px 8px}
+.arp::after{content:"";position:absolute;left:0;border-left:4px solid transparent;border-right:4px solid transparent}
+.arp.a-up::after{top:-6px;border-bottom:6px solid #1f1a17}
+.arp.a-down::after{bottom:-6px;border-top:6px solid #1f1a17}
+.tech{height:16px;line-height:16px;font-size:13px;color:#b23a2a;white-space:nowrap;font-family:"Noto Serif SC",serif}
+.up,.dn{height:12px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.up{justify-content:flex-end;padding-bottom:1px}
+.dn{justify-content:flex-start;padding-top:1px}
+.dt{display:block;width:4px;height:4px;border-radius:50%;background:currentColor}
+.main{height:30px;display:flex;align-items:center;font-size:24px;font-weight:500;line-height:1}
+.acc{font-size:13px;align-self:flex-start;margin-top:2px;margin-right:1px}
+.aug{font-weight:700;margin-left:1px;font-size:22px}
+.dsh{display:block;width:14px;height:2px;background:currentColor}
+.ul{height:8px;align-self:stretch;position:relative}
+.ul.a::before,.ul.b::after{content:"";position:absolute;height:1.6px;background:currentColor}
+.ul.a::before{top:1px;left:var(--al,0);right:var(--ar,0)}
+.ul.b::after{top:5px;left:var(--bl,0);right:var(--br,0)}
+.line.two{display:grid;align-items:end;row-gap:10px;column-gap:0}
+.line.two .measure{min-height:78px;align-self:end}
+.line.two .measure.sub{display:grid;grid-template-columns:subgrid;align-items:end;padding:0}
+.cell.g{display:grid;grid-template-columns:max-content 1fr;grid-template-rows:auto 8px auto;justify-self:stretch;align-items:start;padding:0 5px}
+.cell.g>.cin{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;border-radius:4px}
+.cell.g>.lsp{grid-column:1;grid-row:2;height:8px}
+.cell.g>.la,.cell.g>.lb{grid-row:2;grid-column:1;height:1.6px;background:currentColor;display:block}
+.cell.g>.la{margin-top:1px}
+.cell.g>.lb{margin-top:5px}
+.cell.g>.x{grid-column:1/3;margin-right:-5px}
+.cell.g>.xl{margin-left:-5px}
+.cell.g>.dn{grid-column:1;grid-row:3;justify-self:center}
+.line.two .bl{align-self:stretch;height:auto;margin:26px 8px 18px 4px}
+.line.two .mnum{top:-15px;bottom:auto;left:-14px;width:auto;text-align:left}
+.plabel{position:absolute;right:calc(100% + 16px);width:46px;bottom:26px;font-size:10px;line-height:1.2;color:#7c7166;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:"Noto Serif SC",serif}
+.brace{position:absolute;left:-12px;top:24px;bottom:16px;width:6px;border:2px solid #1f1a17;border-right:0;border-radius:6px 0 0 6px}
+.line{padding-top:var(--xh,0px)}
+.line.two{row-gap:calc(10px + var(--xh,0px) / 2);padding-top:calc(var(--xh,0px) / 2)}
+.tsig{position:absolute;left:50%;transform:translateX(-50%);top:-14px;font-size:11px;font-weight:600;color:#7c7166;line-height:1}
+.bl{display:flex;gap:2px;align-items:center;align-self:flex-end;margin-bottom:18px;height:34px;padding:0 1px;flex:none}
+.bl .t{display:block;width:1.3px;height:100%;background:#1f1a17}
+.bl .k{display:block;width:3.5px;height:100%;background:#1f1a17}
+.bl .c{display:flex;flex-direction:column;justify-content:space-between;height:14px}
+.bl .c::before,.bl .c::after{content:"";width:4px;height:4px;border-radius:50%;background:#1f1a17}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="bar1">
+    <div class="brand"><div class="seal">筝</div><div><b>筝谱 · 简谱编辑器</b><small>Guzheng numbered-notation editor</small></div></div>
+    <span class="status" id="status"></span>
+    <button class="btn primary" id="playBtn" title="Play from selection (Space)">▶ Play</button>
+    <span class="editgrp" id="editGrp"><button class="tb" data-a="undo">↶</button><button class="tb" data-a="redo">↷</button><button class="tb" data-a="del">⌫</button></span>
+    <button class="btn" id="libBtn">☰ My scores</button>
+    <div class="menuwrap">
+      <button class="btn" id="expBtn">Export ▾</button>
+      <div class="menu" id="expMenu">
+        <button data-x="print">Printable page (.html)<small>Open it, then print or save as PDF</small></button>
+        <button data-x="json">Score file (.json)<small>Back up or move to another device</small></button>
+        <button data-x="import">Import score file…<small>Open a .json exported from here</small></button>
+        <button data-x="text">Type notes as text…<small>Paste or type a quick text melody</small></button>
+      </div>
+    </div>
+    <button class="btn" id="helpBtn" title="Shortcuts & notation guide">?</button>
+    <input type="file" id="fileIn" accept=".json,application/json" hidden>
+  </div>
+  <div class="tools" id="tools">
+    <div class="tg"><label>Notes 音符</label><div class="row" id="numRow"></div></div>
+    <div class="tg"><label>Length 时值</label><div class="row" id="durRow"></div></div>
+    <div class="tg"><label>Chord 和弦</label><div class="row">
+      <button class="tb" id="stackBtn"><span class="stk"><i></i><i></i><i></i></span>Stack</button>
+      <button class="tb" data-a="c8up">+8va</button>
+      <button class="tb" data-a="c8dn">−8va</button>
+      <button class="tb" data-a="arpUp"><span class="arpi a-up"></span>Arp</button>
+      <button class="tb" data-a="arpDn"><span class="arpi a-down"></span>Arp</button>
+      <button class="tb" data-a="unchord">✕</button>
+    </div></div>
+    <div class="tg"><label>Pitch 音高</label><div class="row">
+      <button class="tb" data-a="oup" title="Higher octave — dot above (↑)">高 ˙<span class="k">↑</span></button>
+      <button class="tb" data-a="odn" title="Lower octave — dot below (↓)">低 .<span class="k">↓</span></button>
+      <button class="tb" data-a="sharp" title="Sharp (#)">♯</button>
+      <button class="tb" data-a="flat" title="Flat (b)">♭</button>
+    </div></div>
+    <div class="tg"><label>Symbols 指法符號</label><div class="row" id="styleSeg">
+      <button class="tb" data-style="cn" title="Mainland style: standard symbols (托└ 劈┐ 抹\ 挑/ 勾⌒ 摇彡…)">大陆</button>
+      <button class="tb" data-style="tw" title="Taiwan style: fingerings marked with Traditional characters (托 擘 抹 勾 搖 間弦…)">台灣</button>
+      <button class="tb" id="customBtn" title="Set your own symbol for any technique">✎ Custom</button>
+    </div></div>
+    <div class="tg"><label>Layout</label><div class="row">
+      <select id="perLine" title="Bars per line"><option value="2">2 bars/line</option><option value="3">3 bars/line</option><option value="4">4 bars/line</option><option value="5">5 bars/line</option><option value="6">6 bars/line</option></select>
+      <button class="tb" id="sizeBtn"><span class="rzi"></span>Resize lines</button>
+      <button class="tb" id="partsBtn"><span class="stk"><i></i><i></i><i></i></span>Parts <b id="partsN"></b></button>
+      <label class="chk" id="hintLbl"><input type="checkbox" id="hintChk" checked> 按音 hints</label>
+      <select id="instSel" style="width:auto;max-width:190px"><option value="koto">🎵 Koto (closest to guzheng)</option><option value="harp">🎵 Harp</option><option value="pluck">🎵 Plucked string</option></select>
+      <label class="chk" id="sndLbl"><input type="checkbox" id="sndChk" checked> Sound</label>
+    </div></div>
+  </div>
+  <div class="tools" id="techTools">
+    <div class="tg"><label>Right hand 右手指法</label><div class="row" id="rhRow"></div></div>
+    <div class="tg"><label>Left hand 左手技法</label><div class="row" id="lhRow"></div></div>
+  </div>
+</div>
+
+<main>
+  <div class="sheet" id="sheet">
+    <input class="meta-in" id="tTitle" placeholder="曲名 Title" spellcheck="false">
+    <input class="meta-in" id="tSub" placeholder="副标题 Subtitle (optional)" spellcheck="false">
+    <div class="metarow">
+      <div class="keysig">
+        <span>1 =</span><select id="tKey" title="Key (D tuning is standard for guzheng)"></select>
+        <select id="tTime" title="Time signature"></select>
+        <span style="margin-left:8px">♩ =</span><input id="tTempo" type="number" min="20" max="240" title="Tempo">
+      </div>
+      <input class="meta-in" id="tComp" placeholder="作曲 / 编曲 Composer" spellcheck="false">
+    </div>
+    <div id="staff" class="staff-lines" tabindex="0"></div>
+  </div>
+  <div class="info">
+    <div id="selInfo"></div>
+    <div class="legend"><span><i>4</i> / <i>7</i> amber = 按音 press notes (not open strings in pentatonic tuning)</span><span>Press <kbd>?</kbd> for shortcuts</span></div>
+  </div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <header><h2>我的乐谱 · My scores</h2><button class="btn primary" id="newBtn">+ New</button><button class="btn" id="closeLib">✕</button></header>
+  <div class="note" id="libNote">Loading…</div>
+  <div class="lib" id="libList"></div>
+</aside>
+
+<div class="tip" id="tip"></div>
+<div class="mpop" id="mpop"></div>
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+
+<script>
+(() => {
+/* ================= constants ================= */
+const KEYS = [["C",0],["D",2],["E",4],["F",5],["G",7],["A",9],["B♭",10],["E♭",3]];
+const TIMES = ["2/4","3/4","4/4","3/8","6/8","1/4"];
+const DURS = [
+  {d:4, key:"w", zh:"全", en:"Whole", demo:"5 – – –"},
+  {d:2, key:"h", zh:"二分", en:"Half", demo:"5 –"},
+  {d:1, key:"q", zh:"四分", en:"Quarter", demo:"5"},
+  {d:.5, key:"e", zh:"八分", en:"Eighth", demo:"5̲"},
+  {d:.25, key:"s", zh:"十六分", en:"16th", demo:"5̳"},
+];
+// Each technique has a mainland (cn) and Taiwan (tw) mark + name.
+// Mainland: the standard symbol set (托└ 劈┐ 挑/ 抹\ 勾⌒ 摇彡 …).
+// Taiwan: marks written as Traditional characters, with Taiwan terms (擘, 間弦 …).
+const TECHS = [
+  {id:"tuo", desc:"Thumb plucks outward, away from you.",  en:"thumb out",   hand:"R", grp:"rf", cn:["└","托"],   tw:["托","托"]},
+  {id:"pi", desc:"Thumb plucks inward, toward you.",   en:"thumb in",    hand:"R", grp:"rf", cn:["┐","劈"],   tw:["擘","擘"]},
+  {id:"mo", desc:"Index finger plucks inward, toward you.",   en:"index in",    hand:"R", grp:"rf", cn:["\\","抹"],  tw:["抹","抹"]},
+  {id:"tiao", desc:"Index finger plucks outward, away from you.", en:"index out",   hand:"R", grp:"rf", cn:["/","挑"],   tw:["挑","挑"]},
+  {id:"gou", desc:"Middle finger plucks inward, toward you.",  en:"middle in",   hand:"R", grp:"rf", cn:["⌒","勾"],   tw:["勾","勾"]},
+  {id:"ti", desc:"Middle finger plucks outward, away from you.",   en:"middle out",  hand:"R", grp:"rf", cn:["◡","剔"],   tw:["剔","剔"]},
+  {id:"da", desc:"Ring finger plucks inward, toward you.",   en:"ring in",     hand:"R", grp:"rf", cn:["<","打"],   tw:["打","打"]},
+  {id:"dacuo", desc:"Octave pinch: thumb (托) and middle finger (勾) pluck two strings an octave apart at the same time.",en:"octave pinch",hand:"R", grp:"rf", cn:["撮","大撮"], tw:["撮","撮"]},
+  {id:"xiaocuo", desc:"Small pinch: thumb and index finger pluck two strings less than an octave apart (usually one string skipped) at the same time.",en:"small pinch",hand:"R",grp:"rf", cn:["小撮","小撮"], tw:["間","間弦"]},
+  {id:"yao", desc:"Tremolo: rapidly re-pluck one string back and forth (usually the thumb, 托/擘) for the full length of the note.",  en:"tremolo",     hand:"R", grp:"rf", cn:["彡","摇指"], tw:["搖","搖指"]},
+  {id:"up", desc:"Slide up: pluck, then press the string on the left of the bridge so the pitch rises (usually a whole step).",   en:"slide up",    hand:"L", grp:"sl", cn:["↗","上滑音"], tw:["↗","上滑音"]},
+  {id:"down", desc:"Slide down: the pitch falls after plucking — press the string first, pluck, then release.", en:"slide down",  hand:"L", grp:"sl", cn:["↘","下滑音"], tw:["↘","下滑音"]},
+  {id:"hui", desc:"Up-and-back slide: pluck, press so the pitch rises, then release back to the original pitch.",  en:"up & back",   hand:"L", grp:"sl", cn:["↗↘","回滑音"], tw:["↗↘","迴滑音"]},
+  {id:"chan", desc:"Vibrato: after plucking, press and release the string left of the bridge rhythmically so the pitch wavers.", en:"vibrato",     hand:"L", grp:"vb", cn:["﹏","颤音"], tw:["顫","顫音"]},
+  {id:"fan", desc:"Harmonic: lightly touch the string at its midpoint while plucking for a clear, bell-like tone an octave higher.",  en:"harmonic",    hand:"L", grp:"hm", cn:["○","泛音"], tw:["泛","泛音"]},
+  {id:"gua", desc:"Glissando: sweep quickly across several strings, landing on this note.",  en:"glissando",   hand:"R", grp:"gl", cn:["刮","刮奏"], tw:["刮","刮奏"]},
+];
+const PINYIN={"上": "shàng", "下": "xià", "乐": "yuè", "二": "èr", "休": "xiū", "值": "zhí", "全": "quán", "八": "bā", "六": "liù", "分": "fēn", "刮": "guā", "剔": "tī", "劈": "pī", "勾": "gōu", "十": "shí", "台": "tái", "右": "yòu", "和": "hé", "器": "qì", "四": "sì", "回": "huí", "大": "dà", "奏": "zòu", "小": "xiǎo", "左": "zuǒ", "弦": "xián", "我": "wǒ", "手": "shǒu", "打": "dǎ", "托": "tuō", "技": "jì", "抹": "mǒ", "拍": "pāi", "指": "zhǐ", "按": "àn", "挑": "tiāo", "搖": "yáo", "摇": "yáo", "撮": "cuō", "擘": "bò", "时": "shí", "止": "zhǐ", "法": "fǎ", "泛": "fàn", "滑": "huá", "灣": "wān", "点": "diǎn", "琶": "pá", "的": "de", "符": "fú", "筝": "zhēng", "箏": "zhēng", "简": "jiǎn", "線": "xiàn", "线": "xiàn", "编": "biān", "节": "jié", "號": "hào", "号": "hào", "調": "diào", "调": "diào", "谱": "pǔ", "譜": "pǔ", "辑": "jí", "迴": "huí", "間": "jiān", "附": "fù", "陆": "lù", "音": "yīn", "顫": "chàn", "颤": "chàn", "高": "gāo", "低": "dī", "撥": "bō"};
+// Chinese text → same text with pinyin after each run of characters (HTML, escaped). Symbols like 彡 have no entry and are left alone.
+function pyHTML(str){
+  return esc(str).replace(/[\u4e00-\u9fff]+/g, run => { const p=[...run].map(c=>PINYIN[c]).filter(Boolean).join(" "); return p ? `${run} <span class="py">${p}</span>` : run; });
+}
+const TECH = Object.fromEntries(TECHS.map(t=>[t.id,t]));
+const STYLES = {cn:"大陆 Mainland", tw:"台灣 Taiwan"};
+let SYMSRC = null, TIPTITLE = false, SELM = -1, SHOWMBTN = true, CURH = 0, SELH = 0, LAYOUTMODE = false; // SELM: index of the measure holding the selection // TIPTITLE: native title tooltips (printable export) // score whose notation style is being drawn
+const styleOf = sc => (sc && STYLES[sc.style]) ? sc.style : "cn";
+const techName = (id, sc) => TECH[id][styleOf(sc)][1];
+const techSym = (id, sc) => { const c = sc?.custom?.[id]; return (typeof c==="string" && c.trim()) ? c.trim() : TECH[id][styleOf(sc)][0]; };
+const BARS = [["|","Single"],["||","Double"],["|:","Repeat start"],[":|","Repeat end"],["|.","Final"]];
+const DEG = [0,0,2,4,5,7,9,11];
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const newId = () => "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const LEN = n => n.d * (n.dot ? 1.5 : 1);
+const clone = o => JSON.parse(JSON.stringify(o));
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k,v) => { try { localStorage.setItem(k,v); } catch {} };
+
+function parseText(str){
+  const out=[]; const errs=[];
+  for (const tok of str.trim().split(/\s+/).filter(Boolean)){
+    if (tok==="|") continue;
+    if (["||","|:",":|","|."].includes(tok)){ out.push({t:"b",k:tok}); continue; }
+    if (!/^[0-7]/.test(tok)){ errs.push(tok); continue; }
+    let body=tok, arp=null;
+    if (body.includes("~")){ arp="up"; body=body.replace(/~/g,""); }
+    const parts=body.split("+"); const head=parts[0];
+    const n={t:"n",p:+head[0],o:0,d:1,dot:false,acc:"",tech:[]};
+    let ok=true;
+    for (const extra of parts.slice(1)){
+      if (!/^[1-7][',#bwhqes.]*$/.test(extra)){ ok=false; break; }
+      const c={p:+extra[0],o:0,acc:""};
+      for (const ch of extra.slice(1)){
+        if(ch==="'") c.o=Math.min(2,c.o+1); else if(ch===",") c.o=Math.max(-2,c.o-1);
+        else if("whqes".includes(ch)) n.d=DURS.find(x=>x.key===ch).d;   // a length written on any chord note applies to the chord
+        else if(ch===".") n.dot=true; else c.acc=ch; }
+      (n.ch=n.ch||[]).push(c);
+    }
+    if (arp && n.ch) n.arp=arp;
+    for (const ch of head.slice(1)){
+      if (ch==="'") n.o=Math.min(2,n.o+1);
+      else if (ch===",") n.o=Math.max(-2,n.o-1);
+      else if ("whqes".includes(ch)) n.d=DURS.find(x=>x.key===ch).d;
+      else if (ch===".") n.dot=true;
+      else if (ch==="#") n.acc="#";
+      else if (ch==="b") n.acc="b";
+      else ok=false;
+    }
+    if (!ok){ errs.push(tok); continue; }
+    if (n.p===0) n.acc="";
+    out.push(n);
+  }
+  return {notes:out, errs};
+}
+
+function prefStyle(){ const v=lsGet("gz-style2"); return STYLES[v]?v:"cn"; }  // default: symbol icons (大陆 set)
+function demoScore(){
+  const {notes} = parseText("3q 3e 5e 6e 1'e 1'e 6e 5q 5e 6e 5h 3q 3e 5e 6e 1'e 1'e 6e 5q 5e 6e 5h 5q 5 5 3e 5e 6q 6 5h 3q 2e 3e 5q 3e 2e 1q 1e 2e 1h |.");
+  const tag=(i,id)=>{ if(notes[i]&&notes[i].t==="n") notes[i].tech.push(id); };
+  tag(0,"tuo"); tag(10,"yao"); tag(21,"yao"); tag(28,"up"); tag(30,"chan"); tag(36,"yao"); tag(4,"gua");
+  return {id:newId(), title:"茉莉花", subtitle:"Jasmine Flower", composer:"江蘇民歌 Jiangsu folk song", key:"D", time:"4/4", tempo:72, perLine:4, style:prefStyle(), custom:{}, parts:[{name:"右手 R.H.", notes}]};
+}
+function blankScore(){
+  return {id:newId(), title:"", subtitle:"", composer:"", key:"D", time:"4/4", tempo:80, perLine:4, style:prefStyle(), custom:{}, parts:[{name:"右手 R.H.", notes:[]}]};
+}
+function validScore(s){
+  if (!s || typeof s!=="object" || !(Array.isArray(s.notes) || (Array.isArray(s.parts) && s.parts.length))) return null;  // new scores keep notes in parts; older ones in notes
+  const sc = Object.assign(blankScore(), s);
+  const normList = list => (Array.isArray(list)?list:[]).filter(n=>n && (n.t==="n"||n.t==="b")).map(n=> n.t==="b"
+    ? {t:"b",k:BARS.some(b=>b[0]===n.k)?n.k:"|"}
+    : {t:"n",p:Math.max(0,Math.min(7,+n.p||0)),o:Math.max(-2,Math.min(2,+n.o||0)),d:[4,2,1,.5,.25].includes(+n.d)?+n.d:1,dot:!!n.dot,acc:["#","b"].includes(n.acc)?n.acc:"",tech:Array.isArray(n.tech)?n.tech.filter(t=>TECH[t]):[], ...(n.mb>=1&&n.mb<=16?{mb:Math.round(n.mb)}:{}), ...(n.lb>=1&&n.lb<=8?{lb:Math.round(n.lb)}:{}),
+        ...(n.lw>=30&&n.lw<100?{lw:Math.round(n.lw)}:{}), ...(n.lx>0&&n.lx<=240?{lx:Math.round(n.lx)}:{}),
+        ...(Array.isArray(n.ch)&&n.ch.length&&+n.p>0?{ch:n.ch.slice(0,5).filter(c=>c&&c.p>=1&&c.p<=7).map(c=>({p:+c.p,o:Math.max(-2,Math.min(2,+c.o||0)),acc:["#","b"].includes(c.acc)?c.acc:""}))}:{}),
+        ...(["up","down"].includes(n.arp)?{arp:n.arp}:{})});
+  // parts: rows that share each line (right hand, left hand, other instruments…). Older scores had notes / lh / twoHands.
+  if (Array.isArray(s.parts) && s.parts.length) sc.parts = s.parts.slice(0,12).map(p=>({name:String(p?.name??"").slice(0,40), notes:normList(p?.notes)}));
+  else { sc.parts=[{name:"右手 R.H.", notes:normList(s.notes)}]; if (s.twoHands || (Array.isArray(s.lh) && s.lh.length)) sc.parts.push({name:"左手 L.H.", notes:normList(s.lh)}); }
+  delete sc.notes; delete sc.lh; delete sc.twoHands;
+  sc.labelFirst = !!s.labelFirst;  // show part names on the first line only
+  if (!KEYS.some(k=>k[0]===sc.key)) sc.key="D";
+  if (!TIMES.includes(sc.time)) sc.time="4/4";
+  sc.tempo = Math.max(20,Math.min(240,+sc.tempo||80));
+  sc.perLine = Math.max(2,Math.min(6,+sc.perLine||4));
+  sc.style = STYLES[s.style] ? s.style : prefStyle();
+  const cu={}; if (s.custom && typeof s.custom==="object") for (const t of TECHS) if (typeof s.custom[t.id]==="string" && s.custom[t.id].trim()) cu[t.id]=s.custom[t.id].trim().slice(0,6);
+  sc.custom=cu;
+  return sc;
+}
+
+/* ================= state ================= */
+let score, touched=false;
+let sel={a:-1,b:-1}, atStart=false, curDur=1;
+let selSet=null, selOwner=null; // Ctrl/⌘-click selection: note indices that need not be next to each other
+// the set only counts while the selection hasn't been replaced since the Ctrl-click (any new sel object ends it)
+const activeSet = () => (selSet && selSet.size && selOwner===sel) ? selSet : null;
+let hist=[], fut=[], clip=null;
+let hints=true, sound=true;
+let instrument = (()=>{ const v=lsGet("gz-inst"); return ["harp","koto","pluck"].includes(v)?v:"koto"; })(); // playback sound: recorded harp or synthesized string
+let tone=-1, stackMode=false; // tone: which chord tone is active (-1 = the note itself)
+
+let draftAt=0; // when the copy we opened with was last changed
+(function init(){
+  const raw = lsGet("gz-current");
+  let s=null, d=null; try { d=JSON.parse(raw); s = raw && validScore(d.score); } catch {}
+  if (s){ score=s; touched = !!d.touched; draftAt = +d.at || 0; }
+  else {
+    // no draft in this browser: open the newest score cached on this computer, if any
+    let lib={}; try { lib=JSON.parse(lsGet("gz-lib")||"{}"); } catch {}
+    const latest=Object.values(lib).sort((a,b)=>(b.updated||0)-(a.updated||0))[0];
+    const ls = latest && validScore(latest.score);
+    if (ls){ score=ls; touched=false; draftAt=latest.updated||0; } else score=demoScore();
+  }
+  hints = lsGet("gz-hints")!=="0"; sound = lsGet("gz-sound")!=="0";
+})();
+
+const range = () => { const S=activeSet(); if (S){ const a=[...S]; return [Math.min(...a), Math.max(...a)]; } return sel.a<0 ? null : [Math.min(sel.a,sel.b), Math.max(sel.a,sel.b)]; };
+const selIdx = () => { const S=activeSet(); if (S) return [...S].sort((x,y)=>x-y); const r=range(); if(!r) return []; const o=[]; for(let i=r[0];i<=r[1];i++) o.push(i); return o; };
+const inSel = i => activeSet() ? selSet.has(i) : (sel.a>=0 && i>=Math.min(sel.a,sel.b) && i<=Math.max(sel.a,sel.b));
+let hand=0; // index of the part (row) being edited
+const NOTES = () => (score.parts[hand] || score.parts[0]).notes;
+const selNotes = () => selIdx().map(i=>NOTES()[i]).filter(n=>n?.t==="n");
+const snap = () => JSON.stringify({score, sel, hand});
+function commit(fn, opts={}){
+  hist.push(snap()); if (hist.length>300) hist.shift(); fut=[];
+  fn(); touched=true; render(); scheduleSave();
+}
+function undo(){ if(!hist.length) return; fut.push(snap()); const s=JSON.parse(hist.pop()); score=s.score; selSet=null; sel=s.sel; hand=+s.hand||0; tone=-1; touched=true; syncMeta(); render(); scheduleSave(); }
+function redo(){ if(!fut.length) return; hist.push(snap()); const s=JSON.parse(fut.pop()); score=s.score; selSet=null; sel=s.sel; hand=+s.hand||0; touched=true; syncMeta(); render(); scheduleSave(); }
+
+/* ================= layout ================= */
+function buildMeasures(notes, time, caps){
+  const [num,den] = time.split("/").map(Number);
+  const cap = num*4/den;
+  const ms=[]; let cur={items:[],pos:0,end:"|",rep:false};
+  const close = (end,barI) => { cur.end=end; cur.barI=barI; ms.push(cur); cur={items:[],pos:0,end:"|",rep:false}; };
+  notes.forEach((n,i)=>{
+    if (n.t==="b"){
+      if (cur.items.length){
+        if (n.k==="|:"){ close("|",undefined); cur.rep=true; cur.repI=i; }
+        else close(n.k,i);
+      } else {
+        if (n.k==="|:"){ cur.rep=true; cur.repI=i; }
+        else if (ms.length){ ms[ms.length-1].end=n.k; ms[ms.length-1].barI=i; }
+        else { cur.lead=n.k; cur.leadI=i; }
+      }
+      return;
+    }
+    if (!cur.items.length){ if (caps){ cur.cap = caps[ms.length] ?? cap; } else { cur.cap = n.mb ? n.mb*4/den : cap; cur.mb = n.mb||0; } }
+    cur.items.push({i,start:cur.pos}); cur.pos+=LEN(n);
+    if (cur.pos >= cur.cap-1e-6) close("|",undefined);
+  });
+  if (cur.items.length || cur.rep) ms.push(cur);
+  return {ms, cap, den, num};
+}
+function handMeasures(h, sc=score){
+  const R=buildMeasures(sc.parts[0].notes, sc.time);
+  if (!h) return R;
+  return buildMeasures(sc.parts[h]?.notes||[], sc.time, R.ms.map(m=>m.cap));
+}
+// group measures into lines; a line can override how many bars it holds (stored on its first note as lb)
+// a line's custom width (% of the page) and extra height (px), plus the drag handles shown in resize mode
+const lineStyle = L => (L.lw ? `max-width:${L.lw}%;` : "") + (L.lx ? `--xh:${L.lx}px;` : "");
+const lineHandles = L => (SHOWMBTN && LAYOUTMODE) ? `<span class="rz rz-w" data-ls="${L.start}" data-tip-h="Drag to change the line's width" data-tip="Double-click to reset."></span><span class="rz rz-h" data-ls="${L.start}" data-tip-h="Drag to change the line's height" data-tip="Double-click to reset."></span>` : "";
+function buildLines(ms, notes, per){
+  const lines=[]; let i=0;
+  while (i<ms.length){
+    const first = ms[i].items[0] ? notes[ms[i].items[0].i] : null;
+    const n = Math.max(1, Math.min(ms.length-i, first?.lb || per));
+    lines.push({start:i, ms:ms.slice(i,i+n), cap:first?.lb||per, ov:!!first?.lb, lw:first?.lw||0, lx:first?.lx||0});
+    i+=n;
+  }
+  return lines;
+}
+
+const pv = t => (t.o||0)*12 + DEG[t.p] + (t.acc==="#"?1:t.acc==="b"?-1:0);
+function dots(k){ return Array.from({length:k},()=>'<i class="dt"></i>').join(""); }
+function cellHTML(n,i,o,showHints){
+  const tech = TECHS.filter(t=>(n.tech||[]).includes(t.id)).map(t=>`<span class="tm" data-tm="${t.id}"${TIPTITLE?` title="${esc(techName(t.id,SYMSRC)+" · "+t.desc)}"`:""}>${esc(techSym(t.id,SYMSRC))}</span>`).join(" ");
+  const accOf = t => t.acc==="#"?"♯":t.acc==="b"?"♭":"";
+  const isPress = t => showHints && t.p>0 && (t.p===4||t.p===7||t.acc);
+  const aug = (n.dot && n.d<2) ? '<span class="aug">·</span>' : "";
+  // chord: highest on top, lowest on the main row (standard jianpu: only the lowest note carries the length lines)
+  const tones = [{...n, idx:-1}, ...(n.p>0 ? (n.ch||[]).map((c,k)=>({...c, idx:k})) : [])].sort((a,b)=>pv(b)-pv(a));
+  const low = tones[tones.length-1];
+  const upper = tones.slice(0,-1).map(t=>`<span class="ctone${isPress(t)?" press":""}" data-tone="${t.idx}"><span class="cup">${t.o>0?dots(t.o):""}</span><span class="crow">${accOf(t)?`<span class="acc">${accOf(t)}</span>`:""}<span class="dig">${t.p}</span></span><span class="cdn">${t.o<0?dots(-t.o):""}</span></span>`).join("");
+  let ul='<span class="ul"></span>';
+  if (o.lv) ul = `<span class="ul a${o.lv===2?" b":""}" style="--al:${o.l1L?-5:0}px;--ar:${o.l1R?-5:0}px;--bl:${o.l2L?-5:0}px;--br:${o.l2R?-5:0}px"></span>`;
+  const arp = (n.arp && tones.length>1) ? `<span class="arp a-${n.arp}"></span>` : "";
+  const top = `<span class="tech">${tech}</span>${upper}<span class="up">${low.o>0?dots(low.o):""}</span><span class="main${isPress(low)?" press":""}" data-tone="${low.idx}">${accOf(low)?`<span class="acc">${accOf(low)}</span>`:""}<span class="dig">${low.p}</span>${aug}</span>`;
+  const dn = `<span class="dn">${low.o<0?dots(-low.o):""}</span>`;
+  const cls = `cell${tones.length>1?" chord":""}${arp?" has-arp":""}`;
+  const grip = SHOWMBTN ? `<span class="grip" data-grip="${i}" data-gh="${CURH}" data-tip-h="Drag to move" data-tip="Drag this note to a new spot. If it's part of a selection, the whole selection moves.">⠿</span>` : "";
+  if (o.g) return `<span class="${cls} g" data-h="${CURH}" data-i="${i}">${arp}<span class="cin">${top}</span>${gLines(o)}${dn}${grip}</span>`;
+  return `<span class="${cls}" data-h="${CURH}" data-i="${i}">${arp}${top}${ul}${dn}${grip}</span>`;
+}
+// underline pieces for the grid cell: they stretch across to the next beamed note when the beam continues
+const gLines = o => (o.lv ? `<i class="la${o.l1R?" x":""}${o.l1L?" xl":""}"></i>` : "") + (o.lv===2 ? `<i class="lb${o.l2R?" x":""}${o.l2L?" xl":""}"></i>` : "") + '<i class="lsp"></i>';
+const dashCellG = (i, ebar) => `<span class="cell g dash${ebar?" ebar":""}"${i!=null?` data-h="${CURH}" data-i="${i}"`:""}><span class="cin"><span class="tech"></span><span class="up"></span><span class="main"><span class="dsh"></span></span></span><i class="lsp"></i><span class="dn"></span></span>`;
+// every note and dash of a bar with the beat it starts on (used to line up the two hands)
+function measureCells(m, notes, den, showHints){
+  if (!m.items.length) return [{start:0, html:dashCellG(null,true)}];
+  const bu = den===8 ? 1.5 : 1;
+  const groups=[]; let g=null;
+  for (const it of m.items){
+    const n=notes[it.i], L=LEN(n);
+    if (n.d<1){
+      const b0=Math.floor((it.start+1e-6)/bu), b1=Math.floor((it.start+L-1e-6)/bu);
+      if (g && g.open && g.beat===b0 && b1===b0) g.items.push(it);
+      else { g={beat:b0,items:[it],open:b1===b0,short:true}; groups.push(g); }
+      if (b1!==b0) g.open=false;
+    } else { g=null; groups.push({items:[it],short:false}); }
+  }
+  const lvOf = x => x ? (notes[x.i].d<=.25?2:1) : 0;
+  const out=[];
+  for (const gr of groups){
+    gr.items.forEach((it,k)=>{
+      const n=notes[it.i], prev=gr.items[k-1], next=gr.items[k+1];
+      const lv = gr.short ? lvOf(it) : 0;
+      out.push({start:it.start, html:cellHTML(n,it.i,{g:true,lv,l1L:k>0,l1R:!!next,l2L:lv===2&&lvOf(prev)===2,l2R:lv===2&&lvOf(next)===2},showHints)});
+    });
+    if (!gr.short){ const it=gr.items[0], n=notes[it.i];
+      if (n.d>=2){ const k=Math.round(LEN(n))-1; for(let j=1;j<=k;j++) out.push({start:it.start+j, html:dashCellG(it.i)}); } }
+  }
+  return out;
+}
+const dashCell = i => `<span class="grp"><span class="cell dash" data-h="${CURH}" data-i="${i}"><span class="tech"></span><span class="up"></span><span class="main"><span class="dsh"></span></span><span class="ul"></span><span class="dn"></span></span></span>`;
+function barHTML(k,i,after){
+  const parts = {"|":'<i class="t"></i>',"||":'<i class="t"></i><i class="t"></i>',"|.":'<i class="t"></i><i class="k"></i>',":|":'<i class="c"></i><i class="t"></i><i class="k"></i>',"|:":'<i class="k"></i><i class="t"></i><i class="c"></i>'}[k] || '<i class="t"></i>';
+  const attrs = i!=null ? ` data-h="0" data-i="${i}"` : (after!=null && SHOWMBTN ? ` data-after="${after}"` : "");
+  return `<span class="bl${i!=null?" tok":""}"${attrs}>${parts}</span>`;
+}
+function measureHTML(m, notes, den, showHints){
+  // a bar with no notes shows a single dash placeholder
+  if (!m.items.length) return {h:'<span class="grp"><span class="cell dash ebar"><span class="tech"></span><span class="up"></span><span class="main"><span class="dsh"></span></span><span class="ul"></span><span class="dn"></span></span></span>', count:1};
+  const bu = den===8 ? 1.5 : 1;
+  const groups=[]; let g=null;
+  for (const it of m.items){
+    const n=notes[it.i], L=LEN(n);
+    if (n.d<1){
+      const b0=Math.floor((it.start+1e-6)/bu), b1=Math.floor((it.start+L-1e-6)/bu);
+      if (g && g.open && g.beat===b0 && b1===b0) g.items.push(it);
+      else { g={beat:b0,items:[it],open:b1===b0,short:true}; groups.push(g); }
+      if (b1!==b0) g.open=false;
+    } else { g=null; groups.push({items:[it],short:false}); }
+  }
+  const lvOf = x => x ? (notes[x.i].d<=.25?2:1) : 0;
+  let h="", count=0;
+  for (const gr of groups){
+    h+='<span class="grp">';
+    gr.items.forEach((it,k)=>{
+      const n=notes[it.i], prev=gr.items[k-1], next=gr.items[k+1];
+      const lv = gr.short ? lvOf(it) : 0;
+      h+=cellHTML(n,it.i,{lv,l1L:k>0,l1R:!!next,l2L:lv===2&&lvOf(prev)===2,l2R:lv===2&&lvOf(next)===2},showHints);
+      count++;
+    });
+    h+="</span>";
+    if (!gr.short){
+      const it=gr.items[0], n=notes[it.i];
+      if (n.d>=2){ const k=Math.round(LEN(n))-1; for(let j=0;j<k;j++) h+=dashCell(it.i); count+=k; }
+    }
+  }
+  return {h,count};
+}
+function staffHTML(sc, per, showHints, caretAtStart){
+  SYMSRC = sc; CURH = 0;
+  if (sc.parts.length>1) return staffHTML2(sc, per, showHints, caretAtStart);
+  const notes0 = sc.parts[0].notes;
+  const {ms,den,num,cap:defCap} = buildMeasures(notes0, sc.time);
+  if (!ms.length) return caretAtStart===null ? "" : `<div class="empty">Click here, then type <b>1</b>–<b>7</b> to write notes · <b>0</b> for a rest<br><small>Or use the buttons above. Press <kbd>?</kbd> for all shortcuts.</small></div>`;
+  const lines=buildLines(ms, notes0, per);
+  let h="";
+  lines.forEach((L,li)=>{
+    const line=L.ms;
+    h+=`<div class="line${L.lw||L.lx?" sized":""}" style="${lineStyle(L)}">${lineHandles(L)}<span class="mnum">${L.start+1}</span>${SHOWMBTN?`<button class="lbtn${L.ov?" ov":""}" data-ls="${L.start}" data-tip-h="Line options" data-tip="Change how many bars go on this line.">⋯</button>`:""}`;
+    let tot=0;
+    line.forEach((m,mi)=>{
+      const mIdx=L.start+mi;
+      const prevMb = mIdx>0 ? ms[mIdx-1].mb : 0;
+      if (li===0 && mi===0 && caretAtStart) h+='<span class="caret"></span>';
+      if (m.lead) h+=barHTML(m.lead,m.leadI);
+      if (m.rep) h+=barHTML("|:",m.repI);
+      const {h:inner,count}=measureHTML(m,notes0,den,showHints);
+      const grow=Math.max(4*(m.cap||defCap)/defCap, count); tot+=grow;  // shorter bars (via ⋯) take less width
+      const tsig = (m.mb && m.mb!==prevMb) ? `<span class="tsig" title="This bar has ${m.mb} beats">${m.mb}/${den}</span>` : (!m.mb && prevMb ? `<span class="tsig">${num}/${den}</span>` : "");
+      const mbtn = (SHOWMBTN && m.items.length) ? `<button class="mbtn" data-mi="${mIdx}" data-tip-h="Bar options" data-tip="Change how many beats this bar holds.">⋯</button>` : "";
+      h+=`<div class="measure${mIdx===SELM?" msel":""}" style="flex-grow:${grow}">${tsig}${mbtn}${inner}</div>`;
+      const last = li===lines.length-1 && mi===line.length-1;
+      let end=m.end; if (last && end==="|" && m.items.length) end="|.";
+      if (m.items.length || m.barI!=null) h+=barHTML(end,m.barI, m.items.length ? m.items[m.items.length-1].i : null);
+    });
+    if (line.length<L.cap && li===lines.length-1) h+=`<div style="flex:${(L.cap-line.length)*(tot/line.length)} 1 0"></div>`;
+    h+="</div>";
+  });
+  return h;
+}
+
+// Several parts: each line is a grid with one row per part; bar lines run through all rows.
+// The top part sets bar lengths and special bar lines; every part's notes line up by beat.
+function staffHTML2(sc, per, showHints, caretAtStart){
+  const P=sc.parts.length;
+  const R=buildMeasures(sc.parts[0].notes, sc.time), den=R.den, num=R.num, defCap=R.cap;
+  const caps=R.ms.map(m=>m.cap);
+  const all=[R, ...sc.parts.slice(1).map(p=>buildMeasures(p.notes, sc.time, caps))];
+  const M=Math.max(1, ...all.map(x=>x.ms.length));
+  const pad = list => { const out=list.slice(); while(out.length<M) out.push({items:[],pos:0,end:"|",pad:true}); return out; };
+  const pms=all.map(x=>pad(x.ms)), rms=pms[0];
+  const lines=buildLines(rms, sc.parts[0].notes, per);
+  const key = x => Math.round(x*1e4)/1e4;
+  let h="";
+  lines.forEach((L,li)=>{
+    const cols=[]; let items=""; let tot=0;
+    const addBar=(k,i,after)=>{ cols.push("max-content"); items+=barHTML(k,i,after).replace('<span class="bl', `<span style="grid-column:${cols.length};grid-row:1/${P+1}" class="bl`); };
+    L.ms.forEach((rm,mi)=>{
+      const mIdx=L.start+mi;
+      const prevMb = mIdx>0 ? rms[mIdx-1].mb : 0;
+      if (rm.lead) addBar(rm.lead, rm.leadI);
+      if (rm.rep) addBar("|:", rm.repI);
+      const cells = pms.map((list,k)=>{ CURH=k; return measureCells(list[mIdx], sc.parts[k].notes, den, showHints); }); CURH=0;
+      const cap = rm.cap ?? pms.map(l=>l[mIdx].cap).find(c=>c!=null) ?? defCap;
+      const starts=[...new Set(cells.flat().map(c=>key(c.start)))].sort((x,y)=>x-y);
+      const c0=cols.length+1;
+      starts.forEach((st,k)=>{ const dur=Math.max(.25,(starts[k+1]??cap)-st); cols.push(`minmax(max-content,${dur}fr)`); tot+=dur; });
+      const place = list => list.map(c=>c.html.replace('<span class="cell', `<span style="grid-column:${starts.indexOf(key(c.start))+1}" class="cell`)).join("");
+      const tsig = (rm.mb && rm.mb!==prevMb) ? `<span class="tsig">${rm.mb}/${den}</span>` : (!rm.mb && prevMb ? `<span class="tsig">${num}/${den}</span>` : "");
+      const mbtn = (SHOWMBTN && rm.items.length) ? `<button class="mbtn" data-mi="${mIdx}" data-tip-h="Bar options" data-tip="Change how many beats this bar holds.">⋯</button>` : "";
+      const span=`grid-column:${c0} / span ${starts.length}`;
+      cells.forEach((list,k)=>{
+        const cls=`measure sub${mIdx===SELM && SELH===k?" msel":""}${SHOWMBTN && k===SELH?" cur":""}`;
+        const lab = (mi===0 && sc.parts[k].name && (!sc.labelFirst || li===0)) ? `<span class="plabel">${esc(sc.parts[k].name)}</span>` : "";
+        items+=`<div class="${cls}" data-hrow="${k}" style="${span};grid-row:${k+1}">${lab}${k===0?tsig+mbtn:""}${place(list)}</div>`;
+      });
+      const last = li===lines.length-1 && mi===L.ms.length-1;
+      let end=rm.end; if (last && end==="|") end="|.";
+      addBar(end, rm.barI, rm.items.length ? rm.items[rm.items.length-1].i : null);
+    });
+    if (L.ms.length<L.cap && li===lines.length-1) cols.push(`${(L.cap-L.ms.length)*(tot/L.ms.length)}fr`);
+    h+=`<div class="line two${L.lw||L.lx?" sized":""}" style="grid-template-columns:${cols.join(" ")};${lineStyle(L)}">${lineHandles(L)}<span class="mnum">${L.start+1}</span><span class="brace"></span>${SHOWMBTN?`<button class="lbtn${L.ov?" ov":""}" data-ls="${L.start}" data-tip-h="Line options" data-tip="Change how many bars go on this line.">⋯</button>`:""}${items}</div>`;
+  });
+  return h;
+}
+
+/* ================= render ================= */
+const staff = $("#staff");
+function effPer(){ const w=staff.clientWidth||900; let p=score.perLine; if (w<520) p=Math.min(p,2); else if (w<720) p=Math.min(p,3); return p; }
+function selMeasure(){
+  const r=range(); if(!r) return -1;
+  const {ms}=handMeasures(hand);
+  for (let k=r[0];k<=r[1];k++){ if (NOTES()[k]?.t!=="n") continue;
+    const mi=ms.findIndex(m=>m.items.some(it=>it.i===k)); if (mi>=0) return mi; }
+  return -1;
+}
+function render(){
+  $("#sheet").classList.toggle("multi", score.parts.length>1);
+  hideTip(); closeMpop();
+  if (hand>=score.parts.length) hand=score.parts.length-1;
+  SELM = selMeasure(); SELH = hand;
+  staff.innerHTML = staffHTML(score, effPer(), hints, atStart);
+  const r=range();
+  if (r) staff.querySelectorAll(`[data-h="${hand}"][data-i]`).forEach(el=>{ if(inSel(+el.dataset.i)) el.classList.add("sel"); });
+  if (r && r[0]===r[1]) { const c=staff.querySelector(`.cell.chord[data-h="${hand}"][data-i="${r[0]}"]`); c?.querySelector(`[data-tone="${tone}"]`)?.classList.add("act"); }
+  renderTechButtons(); updateTools(); updateInfo(); if (typeof syncHandUI==="function") syncHandUI();
+}
+function updateTools(){
+  const ns=selNotes();
+  const d = ns.length ? ns[ns.length-1].d : curDur;
+  document.querySelectorAll("#durRow [data-d]").forEach(b=>b.classList.toggle("on", +b.dataset.d===d));
+  $("#dotBtn").classList.toggle("on", ns.length>0 && ns.every(n=>n.dot));
+  document.querySelectorAll("[data-tech]").forEach(b=>{ const id=b.dataset.tech; b.classList.toggle("on", ns.length>0 && ns.every(n=>n.tech.includes(id))); });
+  $("#perLine").value=String(score.perLine);
+}
+function updateInfo(){
+  const r=range(); const el=$("#selInfo");
+  const total=NOTES().filter(n=>n.t==="n").length;
+  const dn = DURS.find(x=>x.d===curDur);
+  const hp = score.parts.length>1 ? `${partName(hand)} · ` : "";
+  el.dataset.hp = hp;
+  if (!r) el.textContent = hp + (atStart ? `Inserting at the start · ${total} notes` : `${total} notes · new notes go at the end (${dn.en.toLowerCase()})`);
+  else if (r[0]===r[1]){
+    const n=NOTES()[r[0]];
+    if (n.t==="b") el.textContent = `Bar line "${n.k}" selected · press | to change type`;
+    else { const dd=DURS.find(x=>x.d===n.d); el.textContent = `Selected: ${n.p}${n.o>0?" (high)":n.o<0?" (low)":""} · ${dd.en}${n.dot?" dotted":""} · typing inserts after it`; }
+  } else el.textContent = hp + `${selIdx().length} items selected · Ctrl/⌘-click to add or remove · Ctrl/⌘ C to copy`;
+}
+
+/* ================= editing ================= */
+function insertTokens(toks){
+  if (!toks.length) return;
+  commit(()=>{
+    const r=range();
+    const at = r ? r[1]+1 : atStart ? 0 : NOTES().length;
+    NOTES().splice(at,0,...clone(toks));
+    sel={a:at+toks.length-1,b:at+toks.length-1}; atStart=false; tone=-1;
+  });
+}
+const clampO = o => Math.max(-2,Math.min(2,o));
+function selOne(){ const r=range(); if(!r||r[0]!==r[1]||selIdx().length!==1) return null; const n=NOTES()[r[0]]; return n?.t==="n"&&n.p>0?n:null; }
+function addTone(p, octDelta){
+  const n=selOne(); if(!n){ flash("Select one note first, then add chord notes"); return; }
+  if ((n.ch||[]).length>=5){ flash("A chord can have up to 6 notes"); return; }
+  const all=[n,...(n.ch||[])];
+  let t;
+  if (octDelta){ const b=(tone>=0&&n.ch?.[tone])||n; t={p:b.p,o:clampO(b.o+octDelta),acc:b.acc}; }
+  else { const low=Math.min(...all.map(pv)); t={p,o:2,acc:""}; while(pv(t)>=low && t.o>-2) t.o--; }  // new chord notes go just below the lowest note
+  if (all.some(x=>pv(x)===pv(t))){ flash("That note is already in the chord"); return; }
+  commit(()=>{ n.ch=[...(n.ch||[]), t]; tone=n.ch.length-1; });
+  preview(n);
+}
+function clearChord(){ const ns=selNotes().filter(n=>n.ch); if(!ns.length){ flash("No chord selected"); return; } commit(()=>ns.forEach(n=>{ delete n.ch; delete n.arp; })); tone=-1; }
+function setArp(dir){
+  const ns=selNotes().filter(n=>n.ch?.length); if(!ns.length){ flash("Make a chord first (Shift + number), then add 琶音"); return; }
+  const all=ns.every(n=>n.arp===dir);
+  commit(()=>ns.forEach(n=>{ if(all) delete n.arp; else n.arp=dir; }));
+}
+function insertNote(p){
+  if (stackMode && p>0 && selOne()){ addTone(p); return; }
+  const r=range(); let d=curDur;
+  if (r){ const n=NOTES()[r[1]]; if (n?.t==="n") d=n.d; }
+  const n={t:"n",p,o:0,d,dot:false,acc:"",tech:[]};
+  curDur=d; insertTokens([n]); preview(n);
+}
+function applyNotes(fn, play){
+  const ns=selNotes(); if(!ns.length) return false;
+  commit(()=>ns.forEach(fn));
+  if (play && ns.length===1) preview(ns[0]);
+  return true;
+}
+function setDur(d){ curDur=d; if(!applyNotes(n=>{n.d=d; if(d>=4&&n.dot) n.dot=false;})) render(); }
+function toggleDot(){ const ns=selNotes(); const all=ns.every(n=>n.dot); applyNotes(n=>n.dot=!all); }
+function octave(dl){
+  const one=selOne(); if (one && tone>=0 && one.ch?.[tone]){ commit(()=>{ const t=one.ch[tone]; t.o=clampO(t.o+dl); }); preview(one); return; }
+  applyNotes(n=>{ if(n.p>0) n.o=Math.max(-2,Math.min(2,n.o+dl)); }, true); }
+function accid(a){
+  const one=selOne(); if (one && tone>=0 && one.ch?.[tone]){ commit(()=>{ const t=one.ch[tone]; t.acc = t.acc===a?"":a; }); preview(one); return; }
+  const ns=selNotes(); const all=ns.every(n=>n.acc===a); applyNotes(n=>{ if(n.p>0) n.acc = all?"":a; }, true); }
+function toggleTech(id){
+  const ns=selNotes(); if(!ns.length){ flash("Select a note first, then choose a technique"); return; }
+  const all=ns.every(n=>n.tech.includes(id)); const g=TECH[id].grp;
+  commit(()=>ns.forEach(n=>{
+    if (all) n.tech=n.tech.filter(t=>t!==id);
+    else { if (n.p===0) return; n.tech=n.tech.filter(t=>TECH[t].grp!==g); n.tech.push(id); }
+  }));
+}
+function addBar(k){
+  const r=range();
+  if (r && r[0]===r[1] && NOTES()[r[0]].t==="b"){
+    const cur=NOTES()[r[0]].k;
+    const next = k || BARS[(BARS.findIndex(b=>b[0]===cur)+1)%BARS.length][0];
+    commit(()=>NOTES()[r[0]].k=next); return;
+  }
+  insertTokens([{t:"b",k:k||"|"}]);
+}
+function del(){
+  const one=selOne();
+  if (one && tone>=0 && one.ch?.[tone]){ commit(()=>{ one.ch.splice(tone,1); if(!one.ch.length){ delete one.ch; delete one.arp; } tone=Math.min(tone-1, (one.ch?.length||0)-1); }); return; }
+  const r=range();
+  if (!r){ if(!atStart && NOTES().length){ sel={a:NOTES().length-1,b:NOTES().length-1}; del(); } return; }
+  const idx=selIdx();
+  commit(()=>{
+    const arr=NOTES(); for (let k=idx.length-1;k>=0;k--) arr.splice(idx[k],1);
+    if (r[0]>0) sel={a:r[0]-1,b:r[0]-1};
+    else { sel={a:-1,b:-1}; atStart = NOTES().length>0; }
+  });
+}
+function move(dir, extend){
+  const L=NOTES().length; if(!L) return; tone=-1;
+  const r=range();
+  if (extend){
+    if (!r){ sel = dir<0 ? {a:L-1,b:L-1} : {a:0,b:0}; }
+    else sel.b=Math.max(0,Math.min(L-1,sel.b+dir));
+  } else if (!r){
+    if (atStart){ if(dir>0){ atStart=false; sel={a:0,b:0}; } }
+    else if (dir<0) sel={a:L-1,b:L-1};
+  } else {
+    const base = dir<0 ? r[0]-1 : r[1]+1;
+    if (base<0){ sel={a:-1,b:-1}; atStart=true; }
+    else { const i=Math.min(L-1,base); sel={a:i,b:i}; }
+  }
+  render(); scrollSel();
+  const ns=selNotes(); if (!extend && ns.length===1 && sound) preview(ns[0]);
+}
+function scrollSel(){ const el=staff.querySelector(".sel"); if(el) el.scrollIntoView({block:"nearest"}); }
+function copySel(cut){
+  const r=range(); if(!r) return;
+  clip=clone(selIdx().map(i=>NOTES()[i])); flash(`${clip.length} item${clip.length>1?"s":""} ${cut?"cut":"copied"}`);
+  if (cut) del();
+}
+
+/* ================= toolbar build ================= */
+$("#numRow").innerHTML = [1,2,3,4,5,6,7,0].map(p=>`<button class="tb num" data-p="${p}" title="${p===0?"Rest (0)":"Note "+p+" (key "+p+")"}">${p}</button>`).join("");
+const fracHTML = d => d>=1 ? `<span class="frac whole">${d}</span>` : `<span class="frac"><i>1</i><i>${1/d}</i></span>`;  // length in beats: 4, 2, 1, ½, ¼
+$("#durRow").innerHTML = DURS.map(x=>`<button class="tb dur" data-d="${x.d}" aria-label="${x.en} note">${fracHTML(x.d)}<span class="zh">${x.zh}</span><span class="k">${x.key.toUpperCase()}</span></button>`).join("")
+  + `<button class="tb dur" id="dotBtn" aria-label="Dotted note"><span class="doticon"></span><span class="zh">附点</span><span class="k">.</span></button>`;
+function renderTechButtons(){
+  const techBtn = t => { const sy=techSym(t.id,score), nm=techName(t.id,score);
+    return `<button class="tb tq" data-tech="${t.id}">${sy===nm?esc(nm):`<b class="sy">${esc(sy)}</b> ${esc(nm)}`} <span class="en">${t.en}</span></button>`; };
+  $("#rhRow").innerHTML = TECHS.filter(t=>t.hand==="R").map(techBtn).join("");
+  $("#lhRow").innerHTML = TECHS.filter(t=>t.hand==="L").map(techBtn).join("");
+  document.querySelectorAll("#styleSeg [data-style]").forEach(b=>b.classList.toggle("on", b.dataset.style===styleOf(score)));
+  $("#customBtn").classList.toggle("on", Object.keys(score.custom||{}).length>0);
+  if (typeof applyTips==="function") applyTips();
+}
+
+$("#tools").addEventListener("click", e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  if (b.dataset.p!=null) insertNote(+b.dataset.p);
+  else if (b.dataset.d) setDur(+b.dataset.d);
+  else if (b.id==="dotBtn") toggleDot();
+  else if (b.dataset.bar) addBar(b.dataset.bar);
+  else if (b.dataset.style){ lsSet("gz-style2", b.dataset.style); if (styleOf(score)!==b.dataset.style) commit(()=>score.style=b.dataset.style); flash(`Using ${STYLES[b.dataset.style]} symbols`); }
+  else if (b.id==="customBtn") showCustom();
+  else if (b.id==="partsBtn") openPartsPop(b);
+  else if (b.id==="sizeBtn"){ LAYOUTMODE=!LAYOUTMODE; b.classList.toggle("on",LAYOUTMODE); staff.classList.toggle("layout-mode",LAYOUTMODE); render(); flash(LAYOUTMODE?"Drag a line's right edge for width, its bottom edge for height":"Resize off"); }
+  else if (b.id==="stackBtn"){ stackMode=!stackMode; b.classList.toggle("on",stackMode); flash(stackMode?"Stack on: number buttons add chord notes to the selected note":"Stack off"); }
+  else if (b.dataset.a==="c8up") addTone(0,1);
+  else if (b.dataset.a==="c8dn") addTone(0,-1);
+  else if (b.dataset.a==="arpUp") setArp("up");
+  else if (b.dataset.a==="arpDn") setArp("down");
+  else if (b.dataset.a==="unchord") clearChord();
+  else ({oup:()=>octave(1),odn:()=>octave(-1),sharp:()=>accid("#"),flat:()=>accid("b"),undo,redo,del})[b.dataset.a]?.();
+  staff.focus({preventScroll:true});
+});
+$("#techTools").addEventListener("click", e=>{ const b=e.target.closest("[data-tech]"); if(b){ toggleTech(b.dataset.tech); staff.focus({preventScroll:true}); } });
+// keep selection when pressing toolbar buttons
+document.querySelectorAll(".tools").forEach(t=>t.addEventListener("mousedown",e=>{ if(e.target.closest("button")) e.preventDefault(); }));
+
+$("#perLine").addEventListener("change", e=>commit(()=>score.perLine=+e.target.value));
+$("#editGrp").addEventListener("mousedown", e=>{ if(e.target.closest("button")) e.preventDefault(); });
+$("#editGrp").addEventListener("click", e=>{ const b=e.target.closest("[data-a]"); if(!b) return; ({undo,redo,del})[b.dataset.a]?.(); staff.focus({preventScroll:true}); });
+$("#instSel").value=instrument;
+$("#instSel").addEventListener("change", e=>{ instrument=e.target.value; lsSet("gz-inst",instrument); if (ctx) loadAllSamples(instrument); try{ ensureCtx(); preview({t:"n",p:5,o:0,d:1,acc:"",tech:[]}); }catch{} staff.focus({preventScroll:true}); });
+$("#hintChk").checked=hints; $("#sndChk").checked=sound;
+$("#hintChk").addEventListener("change", e=>{ hints=e.target.checked; lsSet("gz-hints",hints?"1":"0"); render(); });
+$("#sndChk").addEventListener("change", e=>{ sound=e.target.checked; lsSet("gz-sound",sound?"1":"0"); });
+
+/* ================= meta fields ================= */
+$("#tKey").innerHTML = KEYS.map(([k])=>`<option value="${k}">${k}</option>`).join("");
+$("#tTime").innerHTML = TIMES.map(t=>`<option>${t}</option>`).join("");
+function syncMeta(){
+  $("#tTitle").value=score.title; $("#tSub").value=score.subtitle; $("#tComp").value=score.composer;
+  $("#tKey").value=score.key; $("#tTime").value=score.time; $("#tTempo").value=score.tempo;
+}
+let metaSnap=null;
+["#tTitle","#tSub","#tComp","#tTempo"].forEach(id=>{
+  const el=$(id), field={"#tTitle":"title","#tSub":"subtitle","#tComp":"composer","#tTempo":"tempo"}[id];
+  el.addEventListener("focus",()=>metaSnap=snap());
+  el.addEventListener("input",()=>{
+    if (metaSnap){ hist.push(metaSnap); fut=[]; metaSnap=null; }
+    score[field] = field==="tempo" ? Math.max(20,Math.min(240,+el.value||score.tempo)) : el.value;
+    touched=true; scheduleSave(); if (field==="title") renderLib();
+  });
+  el.addEventListener("keydown",e=>{ if(e.key==="Enter"){ el.blur(); staff.focus(); } });
+});
+$("#tKey").addEventListener("change",e=>commit(()=>score.key=e.target.value));
+$("#tTime").addEventListener("change",e=>commit(()=>score.time=e.target.value));
+
+/* ================= mouse on staff ================= */
+staff.addEventListener("mousedown", e=>{
+  const rz=e.target.closest(".rz");
+  if (rz){ e.preventDefault(); e.stopPropagation(); startResize(e, rz); return; }
+  const gr=e.target.closest(".grip");
+  if (gr){ e.preventDefault(); e.stopPropagation(); startDrag(e, gr); return; }
+  const mb=e.target.closest(".mbtn");
+  if (mb){ e.preventDefault(); e.stopPropagation(); openMpop(+mb.dataset.mi, mb); return; }
+  const lbn=e.target.closest(".lbtn");
+  if (lbn){ e.preventDefault(); e.stopPropagation(); openLinePop(+lbn.dataset.ls, lbn); return; }
+  if (e.target.closest("#mpop")) return;
+  const blEl=e.target.closest(".bl[data-i],.bl[data-after]");
+  if (blEl){ e.preventDefault(); e.stopPropagation(); openBarlinePop(blEl); return; }
+  const el=e.target.closest("[data-i]");
+  if (!el){ const row=e.target.closest("[data-hrow]"); if (row) hand=+row.dataset.hrow; sel={a:-1,b:-1}; atStart=false; tone=-1; render(); return; }
+  if (el.dataset.h!=null && +el.dataset.h!==hand){ hand=+el.dataset.h; sel={a:-1,b:-1}; }
+  if (e.ctrlKey || e.metaKey){
+    const i=+el.dataset.i; e.preventDefault(); atStart=false; tone=-1;
+    if (!activeSet()) selSet=new Set(selIdx());
+    if (selSet.has(i)) selSet.delete(i); else selSet.add(i);
+    if (!selSet.size){ sel={a:-1,b:-1}; } else { sel={a:i,b:i}; selOwner=sel; }
+    render(); return;
+  }
+  const i=+el.dataset.i; atStart=false;
+  if (e.shiftKey && sel.a>=0) sel.b=i; else sel={a:i,b:i};
+  const tEl=e.target.closest("[data-tone]"); tone = (!e.shiftKey && tEl && NOTES()[i]?.ch) ? +tEl.dataset.tone : -1;
+  render();
+  const n=NOTES()[i]; if(n.t==="n" && !e.shiftKey && sound) preview(n);
+});
+staff.addEventListener("contextmenu", e=>{ if (e.ctrlKey && e.target.closest("[data-i]")) e.preventDefault(); });
+window.addEventListener("resize", ()=>{ clearTimeout(window._rz); window._rz=setTimeout(render,120); });
+
+/* ================= hover tooltips for technique marks ================= */
+const tip = $("#tip");
+function showTip(el){
+  const t = TECH[el.dataset.tm]; if (!t) return;
+  tip.innerHTML = `<span class="s">${esc(techSym(t.id,score))}</span><b>${pyHTML(techName(t.id,score))}</b>${esc(t.en)}<br>${pyHTML(t.desc)}<small>${pyHTML(t.hand==="R"?"Right hand · 右手":"Left hand · 左手")}</small>`;
+  const r = el.getBoundingClientRect();
+  tip.classList.add("show");
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = r.left + r.width/2 - w/2; x = Math.max(8, Math.min(innerWidth - w - 8, x));
+  let y = r.top - h - 8; if (y < 8) y = r.bottom + 8;
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip(){ tip.classList.remove("show"); }
+staff.addEventListener("mouseover", e=>{ const el=e.target.closest(".tm"); if (el) showTip(el); });
+staff.addEventListener("mouseout", e=>{ const el=e.target.closest(".tm"); if (el && !el.contains(e.relatedTarget)) hideTip(); });
+window.addEventListener("scroll", hideTip, {passive:true});
+/* ================= tooltips for UI controls ================= */
+// [selector, heading, description, shortcut]
+const UI_TIPS = [
+  ["#playBtn","Play / Stop","Plays the score with a guzheng-like sound, starting from the selected note (or from the beginning). Select a range to play just that part.","Space"],
+  ["#libBtn","My scores","Open your saved scores. Every score saves automatically; switch between them, make a copy, or delete one here.",""],
+  ["#expBtn","Export & import","Download a printable page or a backup file, open a backup, or type notes in as text.",""],
+  ["#helpBtn","Help","All keyboard shortcuts and a guide to reading the notation.","?"],
+  ["[data-a=oup]","Higher octave","Raises the selected note an octave — adds a dot above the number (up to two).","↑"],
+  ["[data-a=odn]","Lower octave","Lowers the selected note an octave — adds a dot below the number (up to two).","↓"],
+  ["[data-a=sharp]","Sharp ♯","Raises the selected note a half step. On guzheng this is played by pressing the string (按音). Click again to remove.","="],
+  ["#stackBtn","Stack chord notes","When on, the number buttons add chord notes to the selected note instead of new notes. The highest note is written on top. Keyboard: hold Shift and type a number.","Shift 1–7"],
+  ["[data-a=c8up]","Add octave above","Adds the same note one octave higher to the chord (the common octave pinch).",""],
+  ["[data-a=c8dn]","Add octave below","Adds the same note one octave lower to the chord.",""],
+  ["[data-a=arpUp]","Arpeggio, rolled upward 琶音","Marks the chord with a wavy line: roll the notes quickly from low to high. Click again to remove.",""],
+  ["[data-a=arpDn]","Arpeggio, rolled downward 琶音","Marks the chord with a wavy line: roll the notes quickly from high to low. Click again to remove.",""],
+  ["[data-a=unchord]","Remove chord","Removes the stacked notes, keeping the original note. To remove just one chord note, click it and press Backspace.",""],
+  ["[data-a=flat]","Flat ♭","Lowers the selected note a half step. Click again to remove.","B or −"],
+  ["[data-a=undo]","Undo","Undo the last change.","Ctrl/⌘ Z"],
+  ["[data-a=redo]","Redo","Redo a change you undid.","Ctrl/⌘ Shift Z"],
+  ["[data-a=del]","Delete","Delete the selected notes or bar line.","Backspace"],
+  ["#dotBtn","Dotted note 附点","Makes the selected note 1.5× as long. Shown as a dot after the number (or extra dashes for long notes).","."],
+  ["[data-style=tw]","台灣 Taiwan style","Writes fingerings as Traditional characters (托 擘 抹 挑 勾 剔 打 搖 撮 間弦), with Taiwan terms.",""],
+  ["[data-style=cn]","大陆 Mainland style","Writes fingerings with the standard symbols: 托└ 劈┐ 抹\\ 挑/ 勾⌒ 剔◡ 摇彡.",""],
+  ["#customBtn","Custom symbols","Choose your own symbol for any technique to match your book or teacher. Saved with this score.",""],
+  ["#perLine","Bars per line","How many bars fit on each line of the score.",""],
+  ["#hintLbl","按音 hints","Colors 4, 7, sharps and flats amber while you edit. These aren't open strings in pentatonic tuning, so they need a left-hand press (按音). Not shown when printed.",""],
+  ["#sizeBtn","Resize lines","Turn on to show handles on every line: drag the right edge to make a line narrower or wider, the bottom edge to give it more height. Double-click a handle to reset.",""],
+  ["#partsBtn","Parts 声部","Add rows to every line: a left hand, or more instruments for an ensemble. Rename, reorder or remove them here. Click a row (or press Tab) to write in it.","Tab"],
+  ["#instSel","Instrument sound","Koto uses recordings of a koto, the Japanese zither descended from the guzheng — the closest openly licensed sound. Harp uses orchestral-harp recordings. Plucked string is a lighter synthesized sound that works offline.",""],
+  ["#sndLbl","Sound","Play a short pluck when you add or select a note.",""],
+  ["#tKey","Key 調","Which pitch 1 (do) is. 1=D is the standard guzheng tuning.",""],
+  ["#tTime","Time signature 拍號","Beats per bar. Bar lines are placed automatically from this.",""],
+  ["#tTempo","Tempo","Quarter-note beats per minute, used for playback.",""],
+  ["#newBtn","New score","Start a blank score. Your current one stays saved.",""],
+];
+const DUR_TIPS = {4:"Lasts 4 beats. Written as the number followed by three dashes.",2:"Lasts 2 beats. Written as the number followed by one dash.",1:"Lasts 1 beat. Written as the plain number.",.5:"Lasts half a beat. One line under the number; notes in the same beat share the line.",.25:"Lasts a quarter beat. Two lines under the number."};
+const BAR_TIPS = {"|":"Ends the current bar early, e.g. after a pickup. Normal bar lines are added automatically.","||":"Double bar line — marks the end of a section.","|:":"Start of a repeated section.",":|":"End of a repeated section — go back to the start-repeat sign (or the beginning) and play again.","|.":"Final bar line — the end of the piece."};
+function setTip(el, h, b, k){ if(!el) return; el.dataset.tipH=h||""; el.dataset.tip=b||""; el.dataset.tipK=k||""; el.removeAttribute("title"); }
+function applyTips(){
+  UI_TIPS.forEach(([sel,h,b,k])=>document.querySelectorAll(sel).forEach(el=>setTip(el,h,b,k)));
+  document.querySelectorAll("#numRow [data-p]").forEach(el=>{ const p=+el.dataset.p;
+    setTip(el, p===0?"Rest 休止":`Note ${p}`, p===0?"Adds a rest (silence) after the selected note.":`Adds ${p} after the selected note, with the same length.${p===4||p===7?" On guzheng this needs a left-hand press (按音).":""}`, String(p)); });
+  document.querySelectorAll("#durRow [data-d]").forEach(el=>{ const x=DURS.find(d=>d.d===+el.dataset.d);
+    setTip(el, `${x.en} note · ${x.d>=1?x.d:"1/"+(1/x.d)} beat${x.d>1?"s":""} · ${x.zh}音符`, `${DUR_TIPS[x.d]} Changes the selected note; new notes then use this length.`, x.key.toUpperCase()); });
+  document.querySelectorAll("[data-tech]").forEach(el=>{ const t=TECH[el.dataset.tech];
+    setTip(el, `${(techSym(t.id,score)===techName(t.id,score) || /[\u4e00-\u9fff]/.test(techSym(t.id,score)))?"":techSym(t.id,score)+"  "}${techName(t.id,score)} · ${t.en}`, `${t.desc} Select notes first, then click (click again to remove).`, ""); });
+}
+let tipTimer=null, tipEl=null;
+function showUiTip(el){
+  const k=el.dataset.tipK;
+  tip.innerHTML = `${el.dataset.tipH?`<b>${pyHTML(el.dataset.tipH)}</b>`:""}${k?`<span class="kb">${esc(k)}</span>`:""}${el.dataset.tip?`<br>${pyHTML(el.dataset.tip)}`:""}`;
+  tip.classList.add("show");
+  const r=el.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
+  let x=r.left+r.width/2-w/2; x=Math.max(8,Math.min(innerWidth-w-8,x));
+  let y=r.bottom+8; if (y+h>innerHeight-8) y=r.top-h-8;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+document.addEventListener("mouseover", e=>{
+  const el=e.target.closest("[data-tip-h],[data-tip]"); if (el===tipEl) return;
+  clearTimeout(tipTimer); tipEl=el;
+  if (!el){ if(!e.target.closest(".tm")) hideTip(); return; }
+  tipTimer=setTimeout(()=>{ if(tipEl===el && el.isConnected) showUiTip(el); }, 350);
+});
+document.addEventListener("mousedown", ()=>{ clearTimeout(tipTimer); if (tipEl) hideTip(); });
+
+/* ================= resize lines ================= */
+function lineFirstNote(ls){
+  const {ms}=buildMeasures(score.parts[0].notes, score.time);
+  return ms[ls]?.items[0] ? score.parts[0].notes[ms[ls].items[0].i] : null;
+}
+function startResize(e, h){
+  const line=h.closest(".line"), ls=+h.dataset.ls, n=lineFirstNote(ls); if (!line || !n) return;
+  const wide=h.classList.contains("rz-w"), full=staff.clientWidth, r=line.getBoundingClientRect();
+  const st={x0:e.clientX, y0:e.clientY, w0:r.width/full*100, x:n.lx||0, val:null};
+  document.body.classList.add(wide?"rzx":"rzy"); hideTip();
+  const move=ev=>{
+    if (wide){ st.val=Math.max(30,Math.min(100, st.w0 + (ev.clientX-st.x0)/full*100)); line.style.maxWidth=st.val+"%"; }
+    else { st.val=Math.max(0,Math.min(240, st.x + (ev.clientY-st.y0))); line.style.setProperty("--xh", st.val+"px"); }
+  };
+  const up=()=>{
+    document.removeEventListener("mousemove",move); document.removeEventListener("mouseup",up); document.body.classList.remove("rzx","rzy");
+    if (st.val==null) return;
+    const v=Math.round(st.val);
+    commit(()=>{ const t=lineFirstNote(ls); if(!t) return; if (wide){ if (v>=99) delete t.lw; else t.lw=v; } else { if (v<=0) delete t.lx; else t.lx=v; } });
+  };
+  document.addEventListener("mousemove",move); document.addEventListener("mouseup",up);
+}
+staff.addEventListener("dblclick", e=>{ const h=e.target.closest(".rz"); if(!h) return;
+  commit(()=>{ const t=lineFirstNote(+h.dataset.ls); if(!t) return; if (h.classList.contains("rz-w")) delete t.lw; else delete t.lx; }); flash("Line size reset"); });
+
+/* ================= drag notes to move them ================= */
+let drag=null;
+const listOf = h => (score.parts[+h] || score.parts[0]).notes;
+function startDrag(e, gripEl){
+  const h=+gripEl.dataset.gh, i=+gripEl.dataset.grip;
+  if (h!==hand || !inSel(i)){ hand=h; sel={a:i,b:i}; tone=-1; render(); }
+  const idx=selIdx();
+  const ghost=document.createElement("div"); ghost.className="dragghost";
+  ghost.textContent = idx.map(k=>listOf(h)[k]).filter(n=>n?.t==="n").map(n=>n.p).join(" ") || "|";
+  const mark=document.createElement("div"); mark.className="dropmark";
+  document.body.append(ghost, mark);
+  drag={h, idx, x0:e.clientX, y0:e.clientY, moved:false, target:null, ghost, mark};
+  document.addEventListener("mousemove", onDragMove); document.addEventListener("mouseup", onDragEnd);
+}
+function onDragMove(e){
+  if (!drag) return;
+  if (!drag.moved && Math.hypot(e.clientX-drag.x0, e.clientY-drag.y0) < 4) return;
+  if (!drag.moved){ drag.moved=true; document.body.classList.add("dragging"); hideTip(); }
+  drag.ghost.style.left=(e.clientX+12)+"px"; drag.ghost.style.top=(e.clientY+12)+"px"; drag.ghost.style.display="block";
+  // nearest note cell to the pointer (rows weigh more than columns)
+  let best=null, bd=Infinity;
+  staff.querySelectorAll(".cell[data-i][data-h]").forEach(c=>{
+    const r=c.getBoundingClientRect(), cx=Math.max(r.left,Math.min(e.clientX,r.right)), cy=Math.max(r.top,Math.min(e.clientY,r.bottom));
+    const d=Math.hypot(e.clientX-cx, (e.clientY-cy)*2.5); if (d<bd){ bd=d; best=c; } });
+  const row=document.elementFromPoint(e.clientX,e.clientY)?.closest?.("[data-hrow]");
+  if (best && bd<120){
+    const r=best.getBoundingClientRect(), dash=best.classList.contains("dash");
+    const before = !dash && e.clientX < r.left + r.width/2;
+    drag.target={h:+best.dataset.h, i:+best.dataset.i, before};
+    Object.assign(drag.mark.style,{display:"block", left:((before?r.left:r.right)-1)+"px", top:(r.top+14)+"px", height:(r.height-22)+"px"});
+  } else if (row && !listOf(row.dataset.hrow).length){
+    const r=row.getBoundingClientRect();
+    drag.target={h:+row.dataset.hrow, i:null};
+    Object.assign(drag.mark.style,{display:"block", left:(r.left+4)+"px", top:(r.top+14)+"px", height:(r.height-22)+"px"});
+  } else { drag.target=null; drag.mark.style.display="none"; }
+}
+function onDragEnd(){
+  document.removeEventListener("mousemove", onDragMove); document.removeEventListener("mouseup", onDragEnd);
+  const d=drag; drag=null; if (!d) return;
+  d.ghost.remove(); d.mark.remove(); document.body.classList.remove("dragging");
+  if (!d.moved || !d.target) return;
+  const t=d.target;
+  let pos = t.i==null ? 0 : (t.before ? t.i : t.i+1);
+  if (t.h===d.h && d.idx.length && pos>=d.idx[0] && pos<=d.idx[d.idx.length-1]+1 && d.idx.every((k,j)=>k===d.idx[0]+j)) return; // dropped onto itself
+  commit(()=>{
+    const src=listOf(d.h), dst=listOf(t.h);
+    const items=d.idx.map(k=>src[k]);
+    for (let k=d.idx.length-1;k>=0;k--) src.splice(d.idx[k],1);
+    if (src===dst) pos -= d.idx.filter(k=>k<pos).length;
+    dst.splice(pos,0,...items);
+    hand=t.h; tone=-1; atStart=false; sel={a:pos,b:pos+items.length-1};
+  });
+  flash(`Moved ${d.idx.length} item${d.idx.length>1?"s":""}`);
+}
+
+/* ================= bar line menu ================= */
+const BAR_GLYPH = {"|":"|","||":"‖","|:":"|:",":|":":|","|.":"|▌"};
+function openBarlinePop(el){
+  const tokI = el.dataset.i!=null ? +el.dataset.i : null, afterI = el.dataset.after!=null ? +el.dataset.after : null;
+  const cur = tokI!=null ? score.parts[0].notes[tokI].k : "|";
+  mpop.innerHTML = `<div class="mp-h">Bar line</div>
+    <div class="blpick">${BARS.map(([k,n])=>`<button class="tb${k===cur?" on":""}" data-bk="${k}" data-tip-h="${n} bar line" data-tip="${esc(BAR_TIPS[k])}">${BAR_GLYPH[k]}</button>`).join("")}</div>
+    ${tokI!=null?'<div class="mp-act"><span></span><button class="btn" id="blDel">Back to a plain bar line</button></div>':""}`;
+  placePop(el); el.classList.add("picked");
+  mpop.querySelectorAll("[data-bk]").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.bk;
+    if (tokI!=null) commit(()=>{ score.parts[0].notes[tokI].k=k; });
+    else if (k!=="|") commit(()=>{ score.parts[0].notes.splice(afterI+1,0,{t:"b",k}); });
+    else closeMpop();
+    flash(`${BARS.find(x=>x[0]===k)[1]} bar line`);
+  });
+  if (tokI!=null) $("#blDel").onclick=()=>{ commit(()=>{ score.parts[0].notes.splice(tokI,1); }); flash("Plain bar line"); };
+}
+
+/* ================= bar options (⋯) ================= */
+const mpop=$("#mpop");
+function closeMpop(){ mpop.classList.remove("open"); document.querySelectorAll(".bl.picked").forEach(b=>b.classList.remove("picked")); document.querySelectorAll(".line.lopen").forEach(l=>l.classList.remove("lopen")); }
+function placePop(anchor){
+  mpop.classList.add("open");
+  const r=anchor.getBoundingClientRect(), w=mpop.offsetWidth, h=mpop.offsetHeight;
+  let x=r.right-w; x=Math.max(8,Math.min(innerWidth-w-8,x)); let y=r.bottom+6; if(y+h>innerHeight-8) y=r.top-h-6;
+  mpop.style.left=x+"px"; mpop.style.top=y+"px";
+  mpop.querySelectorAll("[data-st]").forEach(b=>b.onclick=ev=>{ ev.preventDefault(); const inp=mpop.querySelector("input"); inp.value=Math.max(+inp.min,Math.min(+inp.max,(+inp.value||0)+ +b.dataset.dl)); });
+  setTimeout(()=>mpop.querySelector("input")?.focus(),20);
+}
+const stepper = (id,min,max,val) => `<span class="stepper"><button data-st data-dl="-1">−</button><input id="${id}" type="number" min="${min}" max="${max}" value="${val}"><button data-st data-dl="1">+</button></span>`;
+// ⋯ on a bar: how many beats this bar holds
+function openMpop(mi, anchor){
+  const {ms,den,num}=buildMeasures(score.parts[0].notes, score.time);
+  const m=ms[mi]; if(!m||!m.items.length) return;
+  const filled=Math.round(m.pos*den/4*100)/100;
+  mpop.innerHTML = `
+    <div class="mp-h">Bar ${mi+1}</div>
+    <label class="mp-row"><span><b>Beats in this bar</b><small>Normally ${num} (${num}/${den}). Currently filled: ${filled}</small></span>${stepper("mpMb",1,16,m.mb||num)}</label>
+    <div class="mp-act"><button class="btn" id="mpReset">Reset</button><button class="btn primary" id="mpApply">Apply</button></div>`;
+  placePop(anchor);
+  const firstI=m.items[0].i;
+  $("#mpApply").onclick=()=>{
+    const mb=Math.max(1,Math.min(16,Math.round(+$("#mpMb").value||num)));
+    commit(()=>{ const fn=score.parts[0].notes[firstI]; if (mb===num) delete fn.mb; else fn.mb=mb; });
+    flash(`Bar ${mi+1} updated`);
+  };
+  $("#mpReset").onclick=()=>{ commit(()=>{ delete score.parts[0].notes[firstI].mb; }); flash("Bar back to default"); };
+}
+// ⋯ on a line: how many bars this line holds
+function openLinePop(ls, anchor){
+  const {ms}=buildMeasures(score.parts[0].notes, score.time);
+  const per=effPer(); const lines=buildLines(ms, score.parts[0].notes, per);
+  const L=lines.find(l=>l.start===ls); if(!L||!ms[ls].items.length) return;
+  const lineI=ms[ls].items[0].i, ln=score.parts[0].notes[lineI];
+  mpop.innerHTML = `
+    <div class="mp-h">Line ${lines.indexOf(L)+1} <small style="font-family:var(--ui);font-weight:400;color:var(--muted);font-size:12px">· bars ${L.start+1}–${L.start+L.ms.length}</small></div>
+    <label class="mp-row"><span><b>Bars on this line</b><small>Normally ${per} (set for all lines under Layout)</small></span>${stepper("mpLb",1,8,ln.lb||per)}</label>
+    <div class="mp-act"><button class="btn" id="mpReset">Reset</button><button class="btn primary" id="mpApply">Apply</button></div>`;
+  placePop(anchor); anchor.closest(".line")?.classList.add("lopen");
+  $("#mpApply").onclick=()=>{
+    const lb=Math.max(1,Math.min(8,Math.round(+$("#mpLb").value||per)));
+    commit(()=>{ const n=score.parts[0].notes[lineI]; if (lb===per) delete n.lb; else n.lb=lb; });
+    flash("Line updated");
+  };
+  $("#mpReset").onclick=()=>{ commit(()=>{ delete score.parts[0].notes[lineI].lb; }); flash("Line back to default"); };
+}
+document.addEventListener("mousedown", e=>{ if (mpop.classList.contains("open") && !e.target.closest("#mpop") && !e.target.closest(".mbtn,.lbtn,.bl[data-i],.bl[data-after],#partsBtn")) closeMpop(); });
+mpop.addEventListener("keydown", e=>{ if(e.key==="Enter" && $("#mpApply")){ e.preventDefault(); $("#mpApply").click(); } if(e.key==="Escape") { closeMpop(); staff.focus(); } });
+
+/* ================= parts ================= */
+const partName = k => score.parts[k]?.name || `Part ${k+1}`;
+function capsList(){ return buildMeasures(score.parts[0].notes, score.time).ms.map(m=>m.cap); }
+// Jump to the same bar in another part. If that part hasn't reached the bar yet, fill the gap with rests.
+function switchHand(target){
+  const n=score.parts.length; if (n<2) return;
+  const to = target!=null ? target : (hand+1)%n; if (to===hand) return;
+  const msFrom=handMeasures(hand).ms, r=range();
+  // with nothing selected, new notes go at the end: that's the bar after the last full one
+  const lastM=msFrom[msFrom.length-1], endBar = !lastM ? 0 : (lastM.pos >= (lastM.cap??0)-1e-6 ? msFrom.length : msFrom.length-1);
+  let mi = r ? msFrom.findIndex(m=>m.items.some(it=>it.i===r[1])) : (atStart ? 0 : endBar);
+  if (mi<0) mi=0;
+  hand=to; tone=-1; atStart=false;
+  const msTo=handMeasures(to).ms;
+  if (mi < msTo.length && msTo[mi].items.length){ const i=msTo[mi].items[0].i; sel={a:i,b:i}; render(); scrollSel(); }
+  else {
+    const caps=capsList(), [nm,dn]=score.time.split("/").map(Number), defCap=nm*4/dn;
+    let want=0; for(let k=0;k<mi;k++) want+= (caps[k] ?? defCap);
+    const arr=NOTES(); let have=arr.reduce((t,n)=>t+(n.t==="n"?LEN(n):0),0);
+    sel={a:-1,b:-1};
+    if (have < want-1e-6){
+      commit(()=>{ const a=NOTES(); while(have < want-1e-6){ const gap=want-have; const d=[1,.5,.25].find(x=>x<=gap+1e-6)||.25; a.push({t:"n",p:0,o:0,d,dot:false,acc:"",tech:[]}); have+=d; } sel={a:-1,b:-1}; });
+      flash(`Filled ${partName(to)} with rests up to bar ${mi+1}`); return;
+    } else render();
+  }
+  flash(`Writing ${partName(hand)} · Tab for the next part`);
+}
+function syncHandUI(){ const n=score.parts.length; $("#partsN").textContent = n>1 ? String(n) : ""; }
+// Parts menu: add, rename, reorder, remove
+function openPartsPop(anchor){
+  const n=score.parts.length;
+  mpop.innerHTML = `<div class="mp-h">Parts 声部</div>
+    <p class="mp-note">Each part gets its own row on every line, lined up by beat, with bar lines running through all of them. The top part sets bar lengths and special bar lines.</p>
+    ${score.parts.map((p,k)=>`<div class="prow" data-k="${k}"><input class="pname" value="${esc(p.name)}" placeholder="Part ${k+1}" maxlength="40" spellcheck="false">
+      <button class="x" data-pm="-1" ${k?"":"disabled"} title="Move up">↑</button><button class="x" data-pm="1" ${k<n-1?"":"disabled"} title="Move down">↓</button>
+      <button class="x danger" data-px ${n>1?"":"disabled"} title="Remove part">✕</button></div>`).join("")}
+    <label class="chk" style="height:auto;margin:8px 0 2px;color:var(--ink)"><input type="checkbox" id="paFirst"${score.labelFirst?" checked":""}> Show part names on the first line only</label>
+    <div class="mp-act"><button class="btn" id="paAdd">+ Add part</button><button class="btn primary" id="paDone">Done</button></div>`;
+  placePop(anchor);
+  const again = () => openPartsPop(anchor);
+  mpop.querySelectorAll(".prow").forEach(row=>{
+    const k=+row.dataset.k, inp=row.querySelector(".pname");
+    inp.addEventListener("change", ()=>{ const v=inp.value.trim().slice(0,40); if (v!==score.parts[k].name){ commit(()=>{ score.parts[k].name=v; }); again(); } });
+    inp.addEventListener("keydown", e=>{ if (e.key==="Enter"){ e.preventDefault(); inp.blur(); } });
+    row.querySelectorAll("[data-pm]").forEach(b=>b.onclick=()=>{ const j=k+ +b.dataset.pm;
+      commit(()=>{ const ps=score.parts; [ps[k],ps[j]]=[ps[j],ps[k]]; if (hand===k) hand=j; else if (hand===j) hand=k; sel={a:-1,b:-1}; }); again(); });
+    const del=row.querySelector("[data-px]");
+    del.onclick=()=>{
+      if (score.parts[k].notes.length && !del.dataset.armed){ del.dataset.armed="1"; del.textContent="Delete?"; return; }
+      commit(()=>{ score.parts.splice(k,1); if (hand>=score.parts.length) hand=score.parts.length-1; sel={a:-1,b:-1}; }); again(); };
+  });
+  $("#paAdd").onclick=()=>{ const m=score.parts.length;
+    commit(()=>{ score.parts.push({name: m===1 ? "左手 L.H." : `Part ${m+1}`, notes:[]}); hand=m; sel={a:-1,b:-1}; atStart=false; }); again();
+    setTimeout(()=>{ const ins=mpop.querySelectorAll(".pname"); ins[ins.length-1]?.select(); },30); };
+  $("#paFirst").onchange=e=>{ commit(()=>{ score.labelFirst=e.target.checked; }); again(); };
+  $("#paDone").onclick=()=>{ closeMpop(); staff.focus({preventScroll:true}); };
+}
+
+/* ================= keyboard ================= */
+document.addEventListener("keydown", e=>{
+  if ($("#modal").classList.contains("open")){ if(e.key==="Escape") closeModal(); return; }
+  const t=e.target; if (["INPUT","TEXTAREA","SELECT"].includes(t.tagName) || t.isContentEditable) return;
+  const k=e.key, mod=e.ctrlKey||e.metaKey;
+  if (mod){
+    const l=k.toLowerCase();
+    if (l==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); }
+    else if (l==="y"){ e.preventDefault(); redo(); }
+    else if (l==="c"){ if(range()){ e.preventDefault(); copySel(false);} }
+    else if (l==="x"){ if(range()){ e.preventDefault(); copySel(true);} }
+    else if (l==="v"){ if(clip){ e.preventDefault(); insertTokens(clip);} }
+    else if (l==="a"){ if(NOTES().length){ e.preventDefault(); sel={a:0,b:NOTES().length-1}; atStart=false; render(); } }
+    return;
+  }
+  if (e.altKey) return;
+  if (k==="Tab" && score.parts.length>1){ e.preventDefault(); const n=score.parts.length; switchHand(e.shiftKey ? (hand-1+n)%n : (hand+1)%n); return; }
+  if (e.shiftKey && /^Digit[1-7]$/.test(e.code)){ e.preventDefault(); addTone(+e.code.slice(5)); return; }
+  let handled=true;
+  if (/^[0-7]$/.test(k)) insertNote(+k);
+  else if ("whqes".includes(k.toLowerCase()) && k.length===1) setDur(DURS.find(x=>x.key===k.toLowerCase()).d);
+  else if (k===".") toggleDot();
+  else if (k==="ArrowUp") octave(1);
+  else if (k==="ArrowDown") octave(-1);
+  else if (k==="ArrowLeft") move(-1,e.shiftKey);
+  else if (k==="ArrowRight") move(1,e.shiftKey);
+  else if (k==="="||k==="+") accid("#");
+  else if (k==="-") accid("b");
+  else if (k==="b"||k==="B") accid("b");
+  else if (k==="|"||k==="\\") addBar(null);
+  else if (k==="Backspace"||k==="Delete") del();
+  else if (k===" ") togglePlay();
+  else if (k==="Home"){ sel={a:-1,b:-1}; atStart=true; render(); }
+  else if (k==="End"){ sel={a:-1,b:-1}; atStart=false; render(); }
+  else if (k==="Escape"){ sel={a:-1,b:-1}; atStart=false; closeMenus(); render(); }
+  else if (k==="?") showHelp();
+  else handled=false;
+  if (handled) e.preventDefault();
+});
+
+/* ================= audio ================= */
+let ctx=null, master=null, ksCache=new Map(), playing=false, srcs=[], timers=[];
+function ensureCtx(){
+  if (!ctx){
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value=.8;
+    const comp = ctx.createDynamicsCompressor();
+    const verb = ctx.createConvolver(); const wet=ctx.createGain(); wet.gain.value=.22;
+    const len=ctx.sampleRate*2, ir=ctx.createBuffer(2,len,ctx.sampleRate);
+    for(let c=0;c<2;c++){ const d=ir.getChannelData(c); for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2); }
+    verb.buffer=ir;
+    master.connect(comp); master.connect(verb); verb.connect(wet); wet.connect(comp); comp.connect(ctx.destination);
+  }
+  if (ctx.state==="suspended") ctx.resume();
+  loadAllSamples(instrument);
+}
+function ks(freq){
+  const key=freq.toFixed(2); if (ksCache.has(key)) return ksCache.get(key);
+  const sr=ctx.sampleRate, len=Math.floor(sr*3.2), buf=ctx.createBuffer(1,len,sr), d=buf.getChannelData(0);
+  const N=Math.max(2,Math.round(sr/freq)), y=new Float32Array(N);
+  let prev=0; for(let i=0;i<N;i++){ const r=Math.random()*2-1; prev=prev*.35+r*.65; y[i]=prev; }
+  const rho=Math.pow(.001, 1/(freq*3.0));
+  let idx=0;
+  for(let n=0;n<len;n++){ const a=y[idx], b=y[(idx+1)%N]; d[n]=a*.55; y[idx]=rho*.5*(a+b); idx=(idx+1)%N; }
+  for(let n=0;n<200;n++) d[n]*=n/200;
+  const out={buf, rate: freq/(sr/(N+.5))}; ksCache.set(key,out); return out;
+}
+function midiOf(n){
+  let semi=KEYS.find(k=>k[0]===score.key)[1]; let base=60+semi; if (semi>=8) base-=12;
+  return base + DEG[n.p] + (n.acc==="#"?1:n.acc==="b"?-1:0) + n.o*12;
+}
+const hz = m => 440*Math.pow(2,(m-69)/12);
+/* Recorded sounds, kept beside this page:
+   harp/ — orchestral harp, one file per semitone A1–C7 (FluidR3 GM soundfont, via soundfont-for-samplers, MIT)
+   koto/ — koto, the guzheng's Japanese relative, every 5 semitones C2–C7 (FluidR3 GM via gleitz/midi-js-soundfonts, CC BY 3.0) */
+const NOTE_NAMES=["C","Db","D","Eb","E","F","Gb","G","Ab","A","Bb","B"];
+const range_ = (a,b,st=1) => { const o=[]; for(let m=a;m<=b;m+=st) o.push(m); return o; };
+const SAMPLE_SETS = {
+  harp: { label:"harp", notes:range_(33,96), url:m=>`harp/${NOTE_NAMES[m%12]}${Math.floor(m/12)-1}.mp3`, gain:4 },
+  koto: { label:"koto", notes:range_(36,96,5), url:m=>`koto/${m}.mp3`, gain:3.2 },
+};
+const smpBuf=new Map(), smpLoad=new Map(), smpAll={}, smpFailed={};
+function loadSample(inst,m){
+  const key=inst+":"+m;
+  if (smpBuf.has(key)) return Promise.resolve(smpBuf.get(key));
+  if (smpLoad.has(key)) return smpLoad.get(key);
+  const p=fetch(SAMPLE_SETS[inst].url(m)).then(r=>{ if(!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+    .then(b=>new Promise((res,rej)=>ctx.decodeAudioData(b,res,rej))).then(buf=>{ smpBuf.set(key,buf); return buf; })
+    .catch(()=>{ smpFailed[inst]=true; return null; });
+  smpLoad.set(key,p); return p;
+}
+function loadAllSamples(inst){
+  if (!SAMPLE_SETS[inst]) return Promise.resolve();
+  if (!smpAll[inst]) smpAll[inst]=Promise.all(SAMPLE_SETS[inst].notes.map(m=>loadSample(inst,m)));
+  return smpAll[inst];
+}
+const nearestSample = (inst,mf) => SAMPLE_SETS[inst].notes.reduce((b,m)=>Math.abs(m-mf)<Math.abs(b-mf)?m:b);
+const samplesReady = inst => SAMPLE_SETS[inst].notes.every(m=>smpBuf.has(inst+":"+m));
+// source for frequency f: the nearest recording (re-pitched a little), or the synthesized string
+function srcFor(f){
+  const set=SAMPLE_SETS[instrument];
+  if (set){
+    const mf=69+12*Math.log2(f/440), mc=nearestSample(instrument,mf), buf=smpBuf.get(instrument+":"+mc);
+    if (buf) return {buf, rate:Math.pow(2,(mf-mc)/12), smp:set};
+    loadSample(instrument,mc);
+  }
+  const k=ks(f); return {buf:k.buf, rate:k.rate, smp:null};
+}
+function pluck(f,t,ring,{gain=.6}={}){
+  const {buf,rate,smp}=srcFor(f);
+  const s=ctx.createBufferSource(); s.buffer=buf; s.playbackRate.setValueAtTime(rate,t); s.baseRate=rate;
+  const g=ctx.createGain();
+  if (smp){ ring=Math.max(ring, Math.min(3, ring+.6)); g.gain.setValueAtTime(gain*smp.gain,t); }  // recordings are quiet (peak ≈ 0.1), so lift them to match the synth
+  else g.gain.setValueAtTime(gain,t);
+  g.gain.setTargetAtTime(0,t+ring,smp?.25:.12);
+  s.connect(g); g.connect(master); s.start(t); s.stop(t+ring+1.2); srcs.push(s);
+  return s;
+}
+function playNote(n,t,dur){
+  if (!n.ch?.length || n.p===0) return playSingle(n,t,dur);
+  const tones=[{...n,main:true},...n.ch].sort((a,b)=>pv(a)-pv(b));
+  if (n.arp==="down") tones.reverse();
+  const step = n.arp ? Math.min(.06, dur/(tones.length+1)) : 0;
+  const ring=Math.min(3, dur+1.4);
+  tones.forEach((tn,k)=>{ const at=t+k*step;
+    if (tn.main) playSingle(n, at, Math.max(.05,dur-k*step));
+    else pluck(hz(midiOf(tn)), at, ring, {gain:.5}); });
+}
+function playSingle(n,t,dur){
+  if (n.p===0) return;
+  const m=midiOf(n), f=hz(m), tech=n.tech||[];
+  const ring=Math.min(3, dur+1.4);
+  if (tech.includes("fan")){
+    const o=ctx.createOscillator(), g=ctx.createGain(); o.type="sine"; o.frequency.value=f*2;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(.32,t+.008); g.gain.exponentialRampToValueAtTime(.001,t+Math.min(2.2,dur+1));
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+2.4); srcs.push(o); return;
+  }
+  if (tech.includes("gua")){
+    const tonic=midiOf({p:1,o:0,acc:""})%12, pent=[0,2,4,7,9];
+    const run=[]; for(let x=m-12;x<m;x++) if(pent.includes(((x-tonic)%12+12)%12)) run.push(x);
+    const span=Math.min(.32,dur*.6), step=span/Math.max(1,run.length);
+    run.forEach((x,i)=>pluck(hz(x),t+i*step,.5,{gain:.22}));
+    t+=span; dur-=span;
+  }
+  if (tech.includes("yao")){
+    const step=.065; let k=0;
+    for(let tt=t; tt<t+dur-.02; tt+=step, k++) pluck(f,tt,step*1.6,{gain:k%2?.32:.4});
+    pluck(f,t+Math.max(0,dur-.02),.9,{gain:.25});
+    return;
+  }
+  const s=pluck(f,t,ring,{gain:.62});
+  const rate=s.baseRate; const pr=s.playbackRate, wt=Math.pow(2,2/12);
+  if (tech.includes("up")){ pr.setValueAtTime(rate,t+dur*.25); pr.linearRampToValueAtTime(rate*wt,t+dur*.6); }
+  if (tech.includes("down")){ pr.setValueAtTime(rate,t+dur*.25); pr.linearRampToValueAtTime(rate/wt,t+dur*.6); }
+  if (tech.includes("hui")){ pr.setValueAtTime(rate,t+dur*.15); pr.linearRampToValueAtTime(rate*wt,t+dur*.4); pr.setValueAtTime(rate*wt,t+dur*.55); pr.linearRampToValueAtTime(rate,t+dur*.85); }
+  if (tech.includes("chan")){
+    const lfo=ctx.createOscillator(), dg=ctx.createGain(); lfo.frequency.value=5.5;
+    dg.gain.setValueAtTime(0,t); dg.gain.linearRampToValueAtTime(rate*.018,t+Math.min(.4,dur*.5));
+    lfo.connect(dg); dg.connect(pr); lfo.start(t); lfo.stop(t+ring+.8); srcs.push(lfo);
+  }
+  if (tech.includes("dacuo") && !n.ch) pluck(f/2,t,ring,{gain:.45});
+  if (tech.includes("xiaocuo") && !n.ch) pluck(hz(m-(n.p===1||n.p===5?3:4)),t,ring,{gain:.4});
+}
+async function preview(n){
+  if (!sound || !n || n.t!=="n" || n.p===0 || playing) return;
+  try { ensureCtx();
+    if (SAMPLE_SETS[instrument] && !smpFailed[instrument]){ const m=nearestSample(instrument,midiOf(n)); if(!smpBuf.has(instrument+":"+m)) await Promise.race([loadSample(instrument,m), new Promise(r=>setTimeout(r,500))]); }
+    playNote({...n,tech:(n.tech||[]).filter(x=>x!=="yao"&&x!=="gua")}, ctx.currentTime+.01, .5); } catch {}
+}
+function clearPlayMark(){ staff.querySelectorAll(".play").forEach(el=>el.classList.remove("play")); }
+function stop(){
+  playing=false; srcs.forEach(s=>{ try{s.stop();}catch{} }); srcs=[]; timers.forEach(clearTimeout); timers=[];
+  clearPlayMark(); $("#playBtn").textContent="▶ Play";
+}
+const startsOf = arr => { let t=0; return arr.map(n=>{ const st=t; if(n.t==="n") t+=LEN(n); return st; }); };
+let playPending=false;
+async function togglePlay(){
+  if (playing){ stop(); return; }
+  if (playPending) return;
+  try { ensureCtx(); } catch { flash("Audio isn't available in this browser"); return; }
+  if (SAMPLE_SETS[instrument] && !samplesReady(instrument) && !smpFailed[instrument]){
+    playPending=true; setStatus(`Loading ${SAMPLE_SETS[instrument].label} sounds…`);
+    await Promise.race([loadAllSamples(instrument), new Promise(r=>setTimeout(r,6000))]);
+    playPending=false; setStatus("");
+  }
+  const arr=NOTES(), st=startsOf(arr), r=range();
+  const B = r ? st[r[0]] : 0;
+  const E = (r && r[1]>r[0]) ? st[r[1]] + (arr[r[1]].t==="n" ? LEN(arr[r[1]]) : 0) : Infinity;
+  const parts=score.parts.map((p,k)=>[k,p.notes]).filter(([,l])=>l.length);
+  const spb=60/score.tempo, t0=ctx.currentTime+.08; let tEnd=t0;
+  playing=true; $("#playBtn").textContent="■ Stop";
+  for (const [h,list] of parts){
+    const s2=startsOf(list);
+    list.forEach((n,i)=>{
+      if (n.t!=="n" || s2[i] < B-1e-6 || s2[i] >= E-1e-6) return;
+      const t=t0+(s2[i]-B)*spb, dur=LEN(n)*spb;
+      playNote(n,t,dur); tEnd=Math.max(tEnd,t+dur);
+      timers.push(setTimeout(()=>{ staff.querySelectorAll(`.play[data-h="${h}"]`).forEach(x=>x.classList.remove("play")); staff.querySelectorAll(`[data-h="${h}"][data-i="${i}"]`).forEach(x=>x.classList.add("play")); if(h===hand){ const el=staff.querySelector(`[data-h="${h}"][data-i="${i}"]`); if(el) el.scrollIntoView({block:"nearest"}); } }, (t-ctx.currentTime)*1000));
+    });
+  }
+  timers.push(setTimeout(()=>{ if(playing){ playing=false; $("#playBtn").textContent="▶ Play"; clearPlayMark(); } }, (tEnd-t0+.3)*1000));
+}
+$("#playBtn").addEventListener("click", togglePlay);
+
+/* ================= storage ================= */
+let db=null, col=null, downloads=null, library=[], libReady=false, mode="local";
+let saveTimer=null, saving=false, saveAgain=false;
+function setStatus(s){ $("#status").textContent=s; }
+function localLib(){ try { return JSON.parse(lsGet("gz-lib")||"{}"); } catch { return {}; } }
+function cacheLocal(){
+  const at=Date.now();
+  lsSet("gz-current", JSON.stringify({score, touched, at}));
+  if (touched){ const lib=localLib(); lib[score.id]={title:score.title||"Untitled", updated:at, score}; lsSet("gz-lib", JSON.stringify(lib)); }
+}
+function scheduleSave(){
+  cacheLocal();
+  if (!touched) return;
+  setStatus("Editing…");
+  clearTimeout(saveTimer); saveTimer=setTimeout(saveNow, 1200);
+}
+function flushSave(){ cacheLocal(); if (touched && saveTimer){ clearTimeout(saveTimer); saveTimer=null; saveNow(); } }
+window.addEventListener("pagehide", flushSave);
+document.addEventListener("visibilitychange", ()=>{ if (document.visibilityState==="hidden") flushSave(); });
+async function saveNow(){
+  saveTimer=null;
+  if (saving){ saveAgain=true; return; }
+  saving=true;
+  const doc={title:score.title||"Untitled", updated:Date.now(), score:clone(score)};
+  try {
+    if (mode==="db"){
+      setStatus("Saving…");
+      await col.doc(score.id).set(doc);
+      setStatus("Saved to your scores ✓");
+    } else {
+      const lib=localLib(); lib[score.id]=doc; lsSet("gz-lib", JSON.stringify(lib));
+      library = Object.entries(lib).map(([id,v])=>({id,...v})).sort((a,b)=>b.updated-a.updated); renderLib();
+      setStatus("Saved in this browser ✓");
+    }
+  } catch (err){
+    if (mode==="db" && (err?.code==="invalid_argument"||err?.code==="revoked"||err?.code==="not_granted")){
+      mode="local"; setNote(); saving=false; return saveNow();
+    }
+    if (err?.code==="quota_exceeded") setStatus("Storage is full — delete some scores");
+    else setStatus("Couldn't save — will retry");
+    saveAgain=true;
+  }
+  saving=false;
+  if (saveAgain){ saveAgain=false; setTimeout(saveNow, 1500); }
+}
+function setNote(){
+  $("#libNote").textContent = mode==="db"
+    ? "Scores save automatically and privately to your Claude account — they follow you to any device."
+    : "Scores save automatically in this browser only. Export a .json file to keep a backup.";
+}
+function renderLib(){
+  const list=$("#libList");
+  if (mode==="db" && !libReady){ list.innerHTML='<div class="li"><small>Loading your scores…</small></div>'; return; }
+  const items = library.slice();
+  if (!items.some(x=>x.id===score.id)) items.unshift({id:score.id, title:score.title||"Untitled", updated:null, unsaved:true});
+  list.innerHTML = items.map(x=>`<div class="li${x.id===score.id?" cur":""}" data-id="${esc(x.id)}">
+    <div class="t" data-open><b>${esc(x.id===score.id?(score.title||"Untitled"):(x.title||"Untitled"))}</b><small>${x.unsaved?(x.id===score.id?"Current · not saved yet (edit to save)":""):new Date(x.updated).toLocaleString()}</small></div>
+    ${x.unsaved?"":`<button class="x" data-dup title="Duplicate">Copy</button><button class="x danger" data-delx title="Delete">Delete</button>`}
+  </div>`).join("");
+}
+$("#libList").addEventListener("click", async e=>{
+  const row=e.target.closest(".li"); if(!row) return; const id=row.dataset.id;
+  if (e.target.closest("[data-open]")){ if(id!==score.id){ const x=library.find(l=>l.id===id); const s=x&&validScore(x.score); if(s) loadScore(s,false); } closeLib(); }
+  else if (e.target.closest("[data-dup]")){
+    const x = id===score.id ? {score} : library.find(l=>l.id===id); const s=validScore(clone(x.score)); if(!s) return;
+    s.id=newId(); s.title=(s.title||"Untitled")+" (copy)"; loadScore(s,true); closeLib(); flash("Duplicated");
+  }
+  else if (e.target.closest("[data-delx]")){
+    const b=e.target.closest("[data-delx]");
+    if (!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Confirm?"; setTimeout(()=>{ if(b.isConnected){ delete b.dataset.armed; b.textContent="Delete"; } },3000); return; }
+    try {
+      if (mode==="db") await col.doc(id).delete();
+      else { const lib=localLib(); delete lib[id]; lsSet("gz-lib",JSON.stringify(lib)); library=library.filter(l=>l.id!==id); }
+      if (id===score.id) loadScore(blankScore(),false);
+      renderLib();
+    } catch { flash("Couldn't delete — try again"); }
+  }
+});
+// open the newest saved copy (account or this computer) if it's newer than what we started with and nothing was edited yet
+let restoreDone=false;
+function maybeRestore(list){
+  if (restoreDone) return; restoreDone=true;
+  if (hist.length) return;
+  const latest=list.slice().sort((a,b)=>(b.updated||0)-(a.updated||0))[0];
+  if (!latest || (latest.updated||0) <= draftAt+500) return;
+  const s=validScore(latest.score); if (!s) return;
+  loadScore(s,false); draftAt=latest.updated||0;
+  flash(`Opened your latest score “${s.title||"Untitled"}”`);
+}
+function loadScore(s, isTouched){
+  if (playing) stop();
+  if (touched){ clearTimeout(saveTimer); saveNow(); }
+  score=s; touched=isTouched; hist=[]; fut=[]; sel={a:-1,b:-1}; atStart=false; tone=-1; hand=0;
+  syncMeta(); render(); renderLib(); scheduleSave();
+  setStatus(isTouched ? "" : "");
+}
+function openLib(){ renderLib(); $("#drawer").classList.add("open"); $("#scrim").classList.add("open"); }
+function closeLib(){ $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open"); }
+$("#libBtn").addEventListener("click", openLib);
+$("#closeLib").addEventListener("click", closeLib);
+$("#scrim").addEventListener("click", closeLib);
+$("#newBtn").addEventListener("click", ()=>{ loadScore(blankScore(),false); closeLib(); staff.focus(); });
+
+async function connect(){
+  // local fallback first
+  library = Object.entries(localLib()).map(([id,v])=>({id,...v})).sort((a,b)=>b.updated-a.updated);
+  setNote(); renderLib();
+  if (!window.claude || typeof window.claude.use!=="function") return;
+  try { downloads = await window.claude.use("downloads"); } catch {}
+  try {
+    const [d,u] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    const id = u ? await u.id() : null;
+    if (!d || !id) return;
+    db=d; col=db.doc("data/users/"+id+"/lib").collection("scores"); mode="db"; setNote(); renderLib();
+    const timer=setTimeout(()=>{ if(!libReady){ $("#libNote").textContent="Can't reach your saved scores yet — still trying. Edits are kept in this browser meanwhile."; } },10000);
+    col.orderBy("updated","desc").onSnapshot(snap=>{
+      library = snap.docs.map(x=>({id:x.id, ...x.data()}));
+      if (snap.size || !snap.metadata.fromCache) maybeRestore(library);
+      if (!snap.metadata.fromCache){ libReady=true; clearTimeout(timer); setNote(); }
+      else libReady=true;
+      renderLib();
+    }, err=>{ clearTimeout(timer); mode="local"; libReady=true; library = Object.entries(localLib()).map(([id,v])=>({id,...v})).sort((a,b)=>b.updated-a.updated); setNote(); renderLib(); });
+    if (touched) scheduleSave();
+  } catch {}
+}
+
+/* ================= export / import ================= */
+const fname = ext => ((score.title||"guzheng-score").replace(/[\\/:*?"<>|]+/g,"").trim()||"guzheng-score")+ext;
+async function offer(filename, data, fallbackText){
+  if (downloads){
+    try { await downloads.save({filename, data}); return; }
+    catch (e){ if (e?.code==="declined") return; if (e?.code==="rate_limited"){ flash("A save prompt is already open"); return; } }
+  }
+  // a normal website (e.g. GitHub Pages): plain browser download
+  if (!window.claude){
+    try {
+      const type = filename.endsWith(".html") ? "text/html" : "application/json";
+      const url=URL.createObjectURL(new Blob([data],{type})), a=document.createElement("a");
+      a.href=url; a.download=filename; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000);
+      return;
+    } catch {}
+  }
+  modal(`<h3>Copy your file</h3><p>Downloading isn't available here, so copy this text and save it as <code>${esc(filename)}</code>.</p><textarea id="cpTxt" readonly>${esc(fallbackText??data)}</textarea><div class="mact"><button class="btn" data-close>Close</button><button class="btn primary" id="cpBtn">Copy</button></div>`);
+  $("#cpBtn").onclick=async()=>{ try{ await navigator.clipboard.writeText($("#cpTxt").value); flash("Copied"); }catch{ $("#cpTxt").select(); flash("Press Ctrl/⌘ C to copy"); } };
+}
+function printableHTML(){
+  const keyLine=`1=${esc(score.key)}&nbsp;&nbsp;${esc(score.time)}&nbsp;&nbsp;♩=${esc(score.tempo)}`;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>${esc(score.title||"Guzheng score")}</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;700&family=Inter:wght@500&display=swap" rel="stylesheet">
+<style>${$("#scoreCss").textContent}
+body{margin:0;background:#eee;font-family:"Inter",sans-serif}
+.sheet{background:#fff;max-width:900px;margin:24px auto;padding:48px 56px}
+.sheet.multi{padding-left:84px}
+h1{font-family:"Noto Serif SC",serif;text-align:center;font-size:30px;margin:0;letter-spacing:.06em}
+.sub{text-align:center;font-family:"Noto Serif SC",serif;color:#555;margin-top:4px}
+.meta{display:flex;justify-content:space-between;font-family:"Noto Serif SC",serif;margin:20px 0 10px;font-weight:600}
+.meta span:last-child{font-weight:500}
+.pbar{text-align:center;margin:16px}
+.pbar button{font:inherit;padding:8px 16px;border-radius:8px;border:1px solid #b23a2a;background:#b23a2a;color:#fff;cursor:pointer}
+.line{break-inside:avoid}
+.tsig{display:none}
+@media print{body{background:#fff}.sheet{margin:0;padding:0;max-width:none}.pbar{display:none}@page{margin:16mm}}
+</style></head><body>
+<div class="pbar"><button onclick="window.print()">Print / Save as PDF</button></div>
+<div class="sheet${score.parts.length>1?" multi":""}"><h1>${esc(score.title||"")}</h1>${score.subtitle?`<div class="sub">${esc(score.subtitle)}</div>`:""}
+<div class="meta"><span>${keyLine}</span><span>${esc(score.composer||"")}</span></div>
+<div class="staff-lines">${(()=>{ TIPTITLE=true; const sm=SELM; SELM=-1; SHOWMBTN=false; const h=staffHTML(score, score.perLine, false, null); SELM=sm; SHOWMBTN=true; TIPTITLE=false; return h; })()}</div></div></body></html>`;
+}
+$("#expBtn").addEventListener("click", e=>{ e.stopPropagation(); $("#expMenu").classList.toggle("open"); });
+function closeMenus(){ $("#expMenu").classList.remove("open"); }
+document.addEventListener("click", e=>{ if(!e.target.closest(".menuwrap")) closeMenus(); });
+$("#expMenu").addEventListener("click", e=>{
+  const b=e.target.closest("[data-x]"); if(!b) return; closeMenus();
+  const x=b.dataset.x;
+  if (x==="json") offer(fname(".json"), JSON.stringify({format:"guzheng-jianpu",version:1,score},null,1));
+  else if (x==="print") offer(fname(".html"), printableHTML());
+  else if (x==="import") $("#fileIn").click();
+  else if (x==="text") showTextInput();
+});
+$("#fileIn").addEventListener("change", async e=>{
+  const f=e.target.files[0]; e.target.value=""; if(!f) return;
+  try {
+    const j=JSON.parse(await f.text()); const s=validScore(j.score||j);
+    if (!s) throw 0;
+    s.id=newId(); loadScore(s,true); flash(`Imported “${s.title||"Untitled"}”`);
+  } catch { flash("That file isn't a score from this editor"); }
+});
+
+/* ================= modal ================= */
+function modal(html){ $("#mbox").innerHTML=html; $("#modal").classList.add("open"); }
+function closeModal(){ $("#modal").classList.remove("open"); staff.focus({preventScroll:true}); }
+$("#modal").addEventListener("click", e=>{ if(e.target.id==="modal"||e.target.closest("[data-close]")) closeModal(); });
+let flashT=null;
+function flash(msg){ setStatus(msg); clearTimeout(flashT); flashT=setTimeout(()=>setStatus(""),2600); }
+
+function showTextInput(){
+  modal(`<h3>Type notes as text</h3>
+  <p>Separate notes with spaces. Each note is a digit <code>0–7</code>, optionally followed by:</p>
+  <table>
+  <tr><td><code>'</code> / <code>,</code></td><td>octave up / down (repeat for two octaves): <code>1'</code> <code>5,</code></td></tr>
+  <tr><td><code>w h q e s</code></td><td>whole, half, quarter (default), eighth, sixteenth: <code>3e</code> <code>6s</code></td></tr>
+  <tr><td><code>.</code></td><td>dotted: <code>5q.</code></td></tr>
+  <tr><td><code>#</code> / <code>b</code></td><td>sharp / flat: <code>4#</code></td></tr>
+  <tr><td><code>1+3+5</code> <code>1+3+5~</code></td><td>a chord (highest note drawn on top); end with <code>~</code> for an upward arpeggio</td></tr>
+  <tr><td><code>|| |: :| |.</code></td><td>special bar lines (plain bars are added automatically)</td></tr>
+  </table>
+  <textarea id="txtIn" placeholder="5q 6e 1'e 6q 5q  3h 2q 1q"></textarea>
+  <div id="txtErr" style="color:var(--seal);font-size:12.5px;min-height:18px;margin-top:6px"></div>
+  <div class="mact"><button class="btn" data-close>Cancel</button><button class="btn primary" id="txtGo">Insert</button></div>`);
+  setTimeout(()=>$("#txtIn").focus(),30);
+  $("#txtGo").onclick=()=>{
+    const {notes,errs}=parseText($("#txtIn").value);
+    if (errs.length){ $("#txtErr").textContent="Couldn't read: "+errs.slice(0,6).join(", "); return; }
+    closeModal(); insertTokens(notes); flash(`Inserted ${notes.length} items`);
+  };
+}
+function showCustom(){
+  const st=styleOf(score);
+  modal(`<h3>Custom fingering symbols</h3>
+  <p>Teachers and books mark fingerings differently. Type the symbol your book uses for any technique; leave a box empty to use the ${esc(STYLES[st])} default. These symbols are saved with this score.</p>
+  <table>${TECHS.map(t=>`<tr><td>${esc(techName(t.id,score))} <span style="color:var(--muted);font-weight:400">${t.en}</span></td><td><input data-cu="${t.id}" maxlength="6" value="${esc(score.custom?.[t.id]||"")}" placeholder="${esc(TECH[t.id][st][0])}" style="width:90px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;font-size:15px;background:#fff"></td></tr>`).join("")}</table>
+  <p style="font-size:12.5px;color:var(--muted)">Tip: box-drawing and math characters like └ ┐ ⌒ ◡ ∧ ∨ ㄴ ㄱ ≡ ﹏ can be copied from here into any box.</p>
+  <div class="mact"><button class="btn" id="cuReset">Reset all</button><span style="flex:1"></span><button class="btn" data-close>Cancel</button><button class="btn primary" id="cuSave">Save</button></div>`);
+  $("#cuReset").onclick=()=>document.querySelectorAll("[data-cu]").forEach(i=>i.value="");
+  $("#cuSave").onclick=()=>{
+    const cu={}; document.querySelectorAll("[data-cu]").forEach(i=>{ const v=i.value.trim(); if(v) cu[i.dataset.cu]=v.slice(0,6); });
+    closeModal(); commit(()=>score.custom=cu); flash("Symbols updated");
+  };
+}
+function showHelp(){
+  modal(`<h3>Shortcuts & notation guide</h3>
+  <table>
+  <tr><td><kbd>1</kbd>–<kbd>7</kbd> <kbd>0</kbd></td><td>Add a note (0 = rest). It goes after the selected note and takes its length.</td></tr>
+  <tr><td><kbd>W</kbd> <kbd>H</kbd> <kbd>Q</kbd> <kbd>E</kbd> <kbd>S</kbd></td><td>Whole · half · quarter · eighth · sixteenth — changes the selected note</td></tr>
+  <tr><td><kbd>.</kbd></td><td>Dotted note (1.5× length)</td></tr>
+  <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Octave up / down (dots above / below)</td></tr>
+  <tr><td><kbd>=</kbd> <kbd>B</kbd></td><td>Sharp / flat (<kbd>-</kbd> also works for flat)</td></tr>
+  <tr><td><kbd>Shift</kbd> + <kbd>1</kbd>–<kbd>7</kbd></td><td>Add a chord note to the selected note. Chords are written with the highest note on top; the new note is placed just lower than the rest, so it appears at the bottom (use ↑/↓ to change its octave). Click a chord note to pick it, then ↑/↓, sharp/flat or ⌫ act on just that note.</td></tr>
+  <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Move selection · hold <kbd>Shift</kbd> to select a range (or Shift-click)</td></tr>
+  <tr><td><b>⠿</b> drag</td><td>Hover a note and drag the ⠿ handle under it to move the note (or the whole selection). In two-hand mode you can drag between hands.</td></tr>
+  <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd>-click</td><td>Add or remove single notes from the selection, even if they aren't next to each other</td></tr>
+  <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>Put the insertion point at the start / end</td></tr>
+  <tr><td>Click a bar line</td><td>Change it to a double bar, repeat start/end or final bar line</td></tr>
+  <tr><td><kbd>|</kbd></td><td>Insert a bar line (e.g. after a pickup), or cycle the selected bar line's type. To start the piece with a repeat, press <kbd>Home</kbd>, then <kbd>|</kbd>, then click the new bar line and choose |:</td></tr>
+  <tr><td><kbd>Tab</kbd></td><td>With more than one part (<b>Parts</b> in Layout): jump to the same bar in the next part (<kbd>Shift</kbd>+<kbd>Tab</kbd> for the previous one)</td></tr>
+  <tr><td><b>⋯</b></td><td>Appears on the bar you've selected: change how many beats that bar holds (e.g. a pickup or a 2/4 bar in a 4/4 piece) or how many bars go on its line</td></tr>
+  <tr><td><kbd>⌫</kbd></td><td>Delete selection</td></tr>
+  <tr><td><kbd>Space</kbd></td><td>Play / stop (from the selected note)</td></tr>
+  <tr><td><kbd>⌘/Ctrl</kbd> + <kbd>Z</kbd> <kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> <kbd>A</kbd></td><td>Undo · copy · cut · paste · select all</td></tr>
+  </table>
+  <p><b>How the notation reads.</b> Bar lines are placed automatically from the time signature. An underline halves a note (eighth), two underlines quarter it (sixteenth); notes in the same beat share a line. A dash <b>–</b> holds the note one more beat. Dots above or below a digit move it up or down an octave.</p>
+  <p><b>Guzheng tuning.</b> A guzheng is tuned pentatonically, so open strings give <b>1 2 3 5 6</b>. Notes <b>4</b> and <b>7</b> (and sharps/flats) must be made by pressing a string with the left hand (按音) — they're shown in amber while you edit. Key <b>D</b> (1 = D) is the standard tuning.</p>
+  <p><b>Techniques.</b> Select one or more notes, then click a technique. Marks appear above the note in red and are heard in playback. Switch <b>台灣 / 大陆</b> to change how they're written: Taiwan style uses Traditional characters (托 擘 抹 挑 勾 剔 打 搖 撮 間弦), mainland style uses the standard symbols (托└ 劈┐ 抹\ 挑/ 勾⌒ 剔◡ 摇彡). Use <b>✎ Custom</b> to match the symbols in your own book.</p>
+  <p style="font-size:12px;color:var(--muted)"><b>Sound credits.</b> Koto and harp recordings come from the FluidR3 General MIDI soundfont by Frank Wen. Koto samples via gleitz/midi-js-soundfonts, licensed CC BY 3.0 (creativecommons.org/licenses/by/3.0); harp samples via the soundfont-for-samplers package (MIT).</p>
+  <div class="mact"><button class="btn primary" data-close>Got it</button></div>`);
+}
+$("#helpBtn").addEventListener("click", showHelp);
+
+/* ================= pinyin on bilingual titles ================= */
+document.querySelectorAll(".tg>label, .drawer header h2, .brand b").forEach(el=>{ if (/[\u4e00-\u9fff]/.test(el.textContent)) el.innerHTML = pyHTML(el.textContent); });
+
+/* ================= go ================= */
+syncMeta(); render(); applyTips(); connect();
+staff.focus({preventScroll:true});
+if (!touched) setStatus("");
+})();
+</script>
+</body>
+</html>
