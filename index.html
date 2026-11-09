@@ -274,6 +274,14 @@ code{background:#f3ecdf;padding:1px 5px;border-radius:4px;font-size:12.5px}
 .dn{justify-content:flex-start;padding-top:1px}
 .dt{display:block;width:4px;height:4px;border-radius:50%;background:currentColor}
 .main{height:30px;display:flex;align-items:center;font-size:24px;font-weight:500;line-height:1}
+.main{position:relative}
+.tside{position:absolute;left:100%;margin-left:-1px;display:flex;font-size:12px;line-height:1;color:#b23a2a;white-space:nowrap;font-family:"Noto Serif SC",serif;font-weight:400}
+.tside.tr{top:-3px}
+.tside.br{bottom:1px}
+.cell.sw1{--sw:10px}.cell.sw2{--sw:22px}.cell.sw3{--sw:32px}.cell.sw4{--sw:40px}
+.cell.has-side{padding-right:calc(var(--sw,9px) + 4px)}
+.cell.g.has-side{padding-right:5px}
+.cell.g.has-side>.cin{padding-right:var(--sw,9px)}
 .acc{font-size:13px;align-self:flex-start;margin-top:2px;margin-right:1px}
 .aug{font-weight:700;margin-left:1px;font-size:22px}
 .dsh{display:block;width:14px;height:2px;background:currentColor}
@@ -440,6 +448,7 @@ const PINYIN={"上": "shàng", "下": "xià", "乐": "yuè", "二": "èr", "休"
 function pyHTML(str){
   return esc(str).replace(/[\u4e00-\u9fff]+/g, run => { const p=[...run].map(c=>PINYIN[c]).filter(Boolean).join(" "); return p ? `${run} <span class="py">${p}</span>` : run; });
 }
+const TECHPOS = {yao:"br", up:"tr", down:"tr", hui:"tr"};
 const TECH = Object.fromEntries(TECHS.map(t=>[t.id,t]));
 const STYLES = {cn:"大陆 Mainland", tw:"台灣 Taiwan"};
 let SYMSRC = null, TIPTITLE = false, SELM = -1, SHOWMBTN = true, CURH = 0, SELH = 0, LAYOUTMODE = false; // SELM: index of the measure holding the selection // TIPTITLE: native title tooltips (printable export) // score whose notation style is being drawn
@@ -617,7 +626,12 @@ function buildLines(ms, notes, per){
 const pv = t => (t.o||0)*12 + DEG[t.p] + (t.acc==="#"?1:t.acc==="b"?-1:0);
 function dots(k){ return Array.from({length:k},()=>'<i class="dt"></i>').join(""); }
 function cellHTML(n,i,o,showHints){
-  const tech = TECHS.filter(t=>(n.tech||[]).includes(t.id)).map(t=>`<span class="tm" data-tm="${t.id}"${TIPTITLE?` title="${esc(techName(t.id,SYMSRC)+" · "+t.desc)}"`:""}>${esc(techSym(t.id,SYMSRC))}</span>`).join(" ");
+  const tmk = (t,c) => `<span class="tm${c?" "+c:""}" data-tm="${t.id}"${TIPTITLE?` title="${esc(techName(t.id,SYMSRC)+" · "+t.desc)}"`:""}>${esc(techSym(t.id,SYMSRC))}</span>`;
+  const used = TECHS.filter(t=>(n.tech||[]).includes(t.id));
+  // where each mark sits: tremolo at the lower right of the digit, slides at the upper right, everything else above the note
+  const tech = used.filter(t=>!TECHPOS[t.id]).map(t=>tmk(t)).join(" ");
+  const sideW = Math.max(0,...["tr","br"].map(ps=>used.filter(t=>TECHPOS[t.id]===ps).reduce((a,t)=>a+[...techSym(t.id,SYMSRC)].length,0)));
+  const side = ["tr","br"].map(ps=>{ const m=used.filter(t=>TECHPOS[t.id]===ps); return m.length?`<span class="tside ${ps}">${m.map(t=>tmk(t)).join("")}</span>`:""; }).join("");
   const accOf = t => t.acc==="#"?"♯":t.acc==="b"?"♭":"";
   const isPress = t => showHints && t.p>0 && (t.p===4||t.p===7||t.acc);
   const aug = (n.dot && n.d<2) ? '<span class="aug">·</span>' : "";
@@ -628,9 +642,9 @@ function cellHTML(n,i,o,showHints){
   let ul='<span class="ul"></span>';
   if (o.lv) ul = `<span class="ul a${o.lv===2?" b":""}" style="--al:${o.l1L?-5:0}px;--ar:${o.l1R?-5:0}px;--bl:${o.l2L?-5:0}px;--br:${o.l2R?-5:0}px"></span>`;
   const arp = (n.arp && tones.length>1) ? `<span class="arp a-${n.arp}"></span>` : "";
-  const top = `<span class="tech">${tech}</span>${upper}<span class="up">${low.o>0?dots(low.o):""}</span><span class="main${isPress(low)?" press":""}" data-tone="${low.idx}">${accOf(low)?`<span class="acc">${accOf(low)}</span>`:""}<span class="dig">${low.p}</span>${aug}</span>`;
+  const top = `<span class="tech">${tech}</span>${upper}<span class="up">${low.o>0?dots(low.o):""}</span><span class="main${isPress(low)?" press":""}" data-tone="${low.idx}">${accOf(low)?`<span class="acc">${accOf(low)}</span>`:""}<span class="dig">${low.p}</span>${aug}${side}</span>`;
   const dn = `<span class="dn">${low.o<0?dots(-low.o):""}</span>`;
-  const cls = `cell${tones.length>1?" chord":""}${arp?" has-arp":""}`;
+  const cls = `cell${tones.length>1?" chord":""}${arp?" has-arp":""}${side?` has-side sw${Math.min(4,sideW)}`:""}`;
   const grip = SHOWMBTN ? `<span class="grip" data-grip="${i}" data-gh="${CURH}" data-tip-h="Drag to move" data-tip="Drag this note to a new spot. If it's part of a selection, the whole selection moves.">⠿</span>` : "";
   if (o.g) return `<span class="${cls} g" data-h="${CURH}" data-i="${i}">${arp}<span class="cin">${top}</span>${gLines(o)}${dn}${grip}</span>`;
   return `<span class="${cls}" data-h="${CURH}" data-i="${i}">${arp}${top}${ul}${dn}${grip}</span>`;
