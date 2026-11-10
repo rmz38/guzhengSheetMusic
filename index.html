@@ -282,6 +282,10 @@ code{background:#f3ecdf;padding:1px 5px;border-radius:4px;font-size:12.5px}
 .cell.has-side{padding-right:calc(var(--sw,9px) + 4px)}
 .cell.g.has-side{padding-right:5px}
 .cell.g.has-side>.cin{padding-right:var(--sw,9px)}
+.tpre{position:absolute;right:100%;margin-right:1px;top:50%;transform:translateY(-50%);font-size:17px;line-height:1;color:#b23a2a;font-family:"Noto Serif SC",serif;font-weight:400}
+.cell.has-pre{padding-left:15px}
+.cell.g.has-pre{padding-left:5px}
+.cell.g.has-pre>.cin{padding-left:10px}
 .acc{font-size:13px;align-self:flex-start;margin-top:2px;margin-right:1px}
 .aug{font-weight:700;margin-left:1px;font-size:22px}
 .dsh{display:block;width:14px;height:2px;background:currentColor}
@@ -441,14 +445,14 @@ const TECHS = [
   {id:"hui", desc:"Up-and-back slide: pluck, press so the pitch rises, then release back to the original pitch.",  en:"up & back",   hand:"L", grp:"sl", cn:["↗↘","回滑音"], tw:["↗↘","迴滑音"]},
   {id:"chan", desc:"Vibrato: after plucking, press and release the string left of the bridge rhythmically so the pitch wavers.", en:"vibrato",     hand:"L", grp:"vb", cn:["﹏","颤音"], tw:["顫","顫音"]},
   {id:"fan", desc:"Harmonic: lightly touch the string at its midpoint while plucking for a clear, bell-like tone an octave higher.",  en:"harmonic",    hand:"L", grp:"hm", cn:["○","泛音"], tw:["泛","泛音"]},
-  {id:"gua", desc:"Glissando: sweep quickly across several strings, landing on this note.",  en:"glissando",   hand:"R", grp:"gl", cn:["刮","刮奏"], tw:["刮","刮奏"]},
+  {id:"gua", desc:"Glissando: sweep quickly across several strings, landing on this note. The arrow before the note points the way the sweep goes (up from a lower note, down from a higher one).",  en:"glissando",   hand:"R", grp:"gl", cn:["↕","刮奏"], tw:["↕","刮奏"]},
 ];
 const PINYIN={"上": "shàng", "下": "xià", "乐": "yuè", "二": "èr", "休": "xiū", "值": "zhí", "全": "quán", "八": "bā", "六": "liù", "分": "fēn", "刮": "guā", "剔": "tī", "劈": "pī", "勾": "gōu", "十": "shí", "台": "tái", "右": "yòu", "和": "hé", "器": "qì", "四": "sì", "回": "huí", "大": "dà", "奏": "zòu", "小": "xiǎo", "左": "zuǒ", "弦": "xián", "我": "wǒ", "手": "shǒu", "打": "dǎ", "托": "tuō", "技": "jì", "抹": "mǒ", "拍": "pāi", "指": "zhǐ", "按": "àn", "挑": "tiāo", "搖": "yáo", "摇": "yáo", "撮": "cuō", "擘": "bò", "时": "shí", "止": "zhǐ", "法": "fǎ", "泛": "fàn", "滑": "huá", "灣": "wān", "点": "diǎn", "琶": "pá", "的": "de", "符": "fú", "筝": "zhēng", "箏": "zhēng", "简": "jiǎn", "線": "xiàn", "线": "xiàn", "编": "biān", "节": "jié", "號": "hào", "号": "hào", "調": "diào", "调": "diào", "谱": "pǔ", "譜": "pǔ", "辑": "jí", "迴": "huí", "間": "jiān", "附": "fù", "陆": "lù", "音": "yīn", "顫": "chàn", "颤": "chàn", "高": "gāo", "低": "dī", "撥": "bō"};
 // Chinese text → same text with pinyin after each run of characters (HTML, escaped). Symbols like 彡 have no entry and are left alone.
 function pyHTML(str){
   return esc(str).replace(/[\u4e00-\u9fff]+/g, run => { const p=[...run].map(c=>PINYIN[c]).filter(Boolean).join(" "); return p ? `${run} <span class="py">${p}</span>` : run; });
 }
-const TECHPOS = {yao:"br", up:"tr", down:"tr", hui:"tr"};
+const TECHPOS = {yao:"br", up:"tr", down:"tr", hui:"tr", gua:"pre"};
 const TECH = Object.fromEntries(TECHS.map(t=>[t.id,t]));
 const STYLES = {cn:"大陆 Mainland", tw:"台灣 Taiwan"};
 let SYMSRC = null, TIPTITLE = false, SELM = -1, SHOWMBTN = true, CURH = 0, SELH = 0, LAYOUTMODE = false; // SELM: index of the measure holding the selection // TIPTITLE: native title tooltips (printable export) // score whose notation style is being drawn
@@ -626,11 +630,19 @@ function buildLines(ms, notes, per){
 const pv = t => (t.o||0)*12 + DEG[t.p] + (t.acc==="#"?1:t.acc==="b"?-1:0);
 function dots(k){ return Array.from({length:k},()=>'<i class="dt"></i>').join(""); }
 function cellHTML(n,i,o,showHints){
-  const tmk = (t,c) => `<span class="tm${c?" "+c:""}" data-tm="${t.id}"${TIPTITLE?` title="${esc(techName(t.id,SYMSRC)+" · "+t.desc)}"`:""}>${esc(techSym(t.id,SYMSRC))}</span>`;
+  const tmk = (t,c,sym) => `<span class="tm${c?" "+c:""}" data-tm="${t.id}"${TIPTITLE?` title="${esc(techName(t.id,SYMSRC)+" · "+t.desc)}"`:""}>${esc(sym||techSym(t.id,SYMSRC))}</span>`;
   const used = TECHS.filter(t=>(n.tech||[]).includes(t.id));
   // where each mark sits: tremolo at the lower right of the digit, slides at the upper right, everything else above the note
   const tech = used.filter(t=>!TECHPOS[t.id]).map(t=>tmk(t)).join(" ");
   const sideW = Math.max(0,...["tr","br"].map(ps=>used.filter(t=>TECHPOS[t.id]===ps).reduce((a,t)=>a+[...techSym(t.id,SYMSRC)].length,0)));
+  // glissando: an up or down arrow just before the note it lands on, pointing the way the sweep travels (from the previous note)
+  let pre="";
+  if ((n.tech||[]).includes("gua") && n.p>0){
+    const cus = (SYMSRC||score)?.custom?.gua; const list = ((SYMSRC||score).parts?.[CURH]||{}).notes||[];
+    let pr=null; for(let k=i-1;k>=0;k--){ const m=list[k]; if(m?.t==="n"&&m.p>0){ pr=m; break; } }
+    const sym = (typeof cus==="string"&&cus.trim()) ? cus.trim() : (pr && pv(pr)>pv(n) ? "↓" : "↑");
+    pre = `<span class="tpre">${tmk(TECH.gua,"",sym)}</span>`;
+  }
   const side = ["tr","br"].map(ps=>{ const m=used.filter(t=>TECHPOS[t.id]===ps); return m.length?`<span class="tside ${ps}">${m.map(t=>tmk(t)).join("")}</span>`:""; }).join("");
   const accOf = t => t.acc==="#"?"♯":t.acc==="b"?"♭":"";
   const isPress = t => showHints && t.p>0 && (t.p===4||t.p===7||t.acc);
@@ -642,9 +654,9 @@ function cellHTML(n,i,o,showHints){
   let ul='<span class="ul"></span>';
   if (o.lv) ul = `<span class="ul a${o.lv===2?" b":""}" style="--al:${o.l1L?-5:0}px;--ar:${o.l1R?-5:0}px;--bl:${o.l2L?-5:0}px;--br:${o.l2R?-5:0}px"></span>`;
   const arp = (n.arp && tones.length>1) ? `<span class="arp a-${n.arp}"></span>` : "";
-  const top = `<span class="tech">${tech}</span>${upper}<span class="up">${low.o>0?dots(low.o):""}</span><span class="main${isPress(low)?" press":""}" data-tone="${low.idx}">${accOf(low)?`<span class="acc">${accOf(low)}</span>`:""}<span class="dig">${low.p}</span>${aug}${side}</span>`;
+  const top = `<span class="tech">${tech}</span>${upper}<span class="up">${low.o>0?dots(low.o):""}</span><span class="main${isPress(low)?" press":""}" data-tone="${low.idx}">${accOf(low)?`<span class="acc">${accOf(low)}</span>`:""}${pre}<span class="dig">${low.p}</span>${aug}${side}</span>`;
   const dn = `<span class="dn">${low.o<0?dots(-low.o):""}</span>`;
-  const cls = `cell${tones.length>1?" chord":""}${arp?" has-arp":""}${side?` has-side sw${Math.min(4,sideW)}`:""}`;
+  const cls = `cell${tones.length>1?" chord":""}${arp?" has-arp":""}${side?` has-side sw${Math.min(4,sideW)}`:""}${pre?" has-pre":""}`;
   const grip = SHOWMBTN ? `<span class="grip" data-grip="${i}" data-gh="${CURH}" data-tip-h="Drag to move" data-tip="Drag this note to a new spot. If it's part of a selection, the whole selection moves.">⠿</span>` : "";
   if (o.g) return `<span class="${cls} g" data-h="${CURH}" data-i="${i}">${arp}<span class="cin">${top}</span>${gLines(o)}${dn}${grip}</span>`;
   return `<span class="${cls}" data-h="${CURH}" data-i="${i}">${arp}${top}${ul}${dn}${grip}</span>`;
